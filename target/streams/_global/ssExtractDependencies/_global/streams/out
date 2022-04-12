@@ -1,0 +1,62 @@
+[error] sbt.librarymanagement.ResolveException: Error downloading org.scala-lang:scala-library:12.0.1
+[error]   Not found
+[error]   Not found
+[error]   not found: C:\Users\lucas\.ivy2\localorg.scala-lang\scala-library\12.0.1\ivys\ivy.xml
+[error]   not found: https://repo1.maven.org/maven2/org/scala-lang/scala-library/12.0.1/scala-library-12.0.1.pom
+[error] Error downloading org.scalafx:scalafx_12.0:12.0.1-R17
+[error]   Not found
+[error]   Not found
+[error]   not found: C:\Users\lucas\.ivy2\localorg.scalafx\scalafx_12.0\12.0.1-R17\ivys\ivy.xml
+[error]   not found: https://repo1.maven.org/maven2/org/scalafx/scalafx_12.0/12.0.1-R17/scalafx_12.0-12.0.1-R17.pom
+[error] 	at lmcoursier.CoursierDependencyResolution.unresolvedWarningOrThrow(CoursierDependencyResolution.scala:345)
+[error] 	at lmcoursier.CoursierDependencyResolution.$anonfun$update$38(CoursierDependencyResolution.scala:314)
+[error] 	at lmcoursier.CoursierDependencyResolution$$Lambda$5260/0x000000001a904f50.apply(Unknown Source)
+[error] 	at scala.util.Either$LeftProjection.map(Either.scala:573)
+[error] 	at lmcoursier.CoursierDependencyResolution.update(CoursierDependencyResolution.scala:314)
+[error] 	at sbt.librarymanagement.DependencyResolution.update(DependencyResolution.scala:60)
+[error] 	at sbt.internal.LibraryManagement$.resolve$1(LibraryManagement.scala:59)
+[error] 	at sbt.internal.LibraryManagement$.$anonfun$cachedUpdate$12(LibraryManagement.scala:133)
+[error] 	at sbt.internal.LibraryManagement$$$Lambda$3105/0x00000000172c1410.apply(Unknown Source)
+[error] 	at sbt.util.Tracked$.$anonfun$lastOutput$1(Tracked.scala:73)
+[error] 	at sbt.util.Tracked$$$Lambda$3054/0x00000000171a1ac0.apply(Unknown Source)
+[error] 	at sbt.internal.LibraryManagement$.$anonfun$cachedUpdate$20(LibraryManagement.scala:146)
+[error] 	at sbt.internal.LibraryManagement$$$Lambda$3107/0x00000000172c3558.apply(Unknown Source)
+[error] 	at scala.util.control.Exception$Catch.apply(Exception.scala:228)
+[error] 	at sbt.internal.LibraryManagement$.$anonfun$cachedUpdate$11(LibraryManagement.scala:146)
+[error] 	at sbt.internal.LibraryManagement$.$anonfun$cachedUpdate$11$adapted(LibraryManagement.scala:127)
+[error] 	at sbt.internal.LibraryManagement$$$Lambda$3101/0x00000000172b78b0.apply(Unknown Source)
+[error] 	at sbt.util.Tracked$.$anonfun$inputChangedW$1(Tracked.scala:219)
+[error] 	at sbt.util.Tracked$$$Lambda$2886/0x00000000170ba470.apply(Unknown Source)
+[error] 	at sbt.internal.LibraryManagement$.cachedUpdate(LibraryManagement.scala:160)
+[error] 	at sbt.Classpaths$.$anonfun$updateTask0$1(Defaults.scala:3690)
+[error] 	at sbt.Classpaths$$$Lambda$698/0x000000001533abf0.apply(Unknown Source)
+[error] 	at scala.Function1.$anonfun$compose$1(Function1.scala:49)
+[error] 	at scala.Function1$$Lambda$353/0x0000000014978d30.apply(Unknown Source)
+[error] 	at sbt.internal.util.$tilde$greater.$anonfun$$u2219$1(TypeFunctions.scala:62)
+[error] 	at sbt.internal.util.$tilde$greater$$Lambda$2705/0x000000001702e070.apply(Unknown Source)
+[error] 	at sbt.std.Transform$$anon$4.work(Transform.scala:68)
+[error] 	at sbt.Execute.$anonfun$submit$2(Execute.scala:282)
+[error] 	at sbt.Execute$$Lambda$2732/0x0000000017036410.apply(Unknown Source)
+[error] 	at sbt.internal.util.ErrorHandling$.wideConvert(ErrorHandling.scala:23)
+[error] 	at sbt.Execute.work(Execute.scala:291)
+[error] 	at sbt.Execute.$anonfun$submit$1(Execute.scala:282)
+[error] 	at sbt.Execute$$Lambda$2715/0x0000000017031f80.apply(Unknown Source)
+[error] 	at sbt.ConcurrentRestrictions$$anon$4.$anonfun$submitValid$1(ConcurrentRestrictions.scala:265)
+[error] 	at sbt.ConcurrentRestrictions$$anon$4$$Lambda$2728/0x0000000017033ed0.apply(Unknown Source)
+[error] 	at sbt.CompletionService$$anon$2.call(CompletionService.scala:64)
+[error] 	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+[error] 	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:515)
+[error] 	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+[error] 	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1130)
+[error] 	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:630)
+[error] 	at java.base/java.lang.Thread.run(Thread.java:883)
+[error] (ssExtractDependencies) sbt.librarymanagement.ResolveException: Error downloading org.scala-lang:scala-library:12.0.1
+[error]   Not found
+[error]   Not found
+[error]   not found: C:\Users\lucas\.ivy2\localorg.scala-lang\scala-library\12.0.1\ivys\ivy.xml
+[error]   not found: https://repo1.maven.org/maven2/org/scala-lang/scala-library/12.0.1/scala-library-12.0.1.pom
+[error] Error downloading org.scalafx:scalafx_12.0:12.0.1-R17
+[error]   Not found
+[error]   Not found
+[error]   not found: C:\Users\lucas\.ivy2\localorg.scalafx\scalafx_12.0\12.0.1-R17\ivys\ivy.xml
+[error]   not found: https://repo1.maven.org/maven2/org/scalafx/scalafx_12.0/12.0.1-R17/scalafx_12.0-12.0.1-R17.pom
