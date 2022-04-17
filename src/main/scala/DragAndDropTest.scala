@@ -1,4 +1,4 @@
-import GUI.{DragContext, borderStyle, dragModeActiveProperty}
+
 import scalafx.Includes._
 import scalafx.application.JFXApp
 import scalafx.beans.property.BooleanProperty
@@ -53,8 +53,6 @@ object DragAndDropTest extends JFXApp{
        root = new BorderPane() {
           center = panelsPane
         }
-
-
     }
   }
 
@@ -101,7 +99,20 @@ object DragAndDropTest extends JFXApp{
   }
 
   def createCard(): Node = new VBox(6) {
-    var currentlyselected = false
+    prefWidth = 100
+    prefHeight = 150
+    val acceptanceLabel = new TextField() {
+      promptText = "a field"
+    }
+    children = Seq(new Label("title"),
+      acceptanceLabel
+    )
+    if(this.hover.value) println("card hovered")
+    //alignment = Pos.CenterLeft
+    style = borderStyle
+  }
+
+    def createColumn(): Node = new VBox(6) {
     prefWidth = 100
     prefHeight = 150
     val acceptanceLabel = new TextField() {
