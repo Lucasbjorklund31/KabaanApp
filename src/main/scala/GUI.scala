@@ -41,53 +41,59 @@ import api.Board
 
 object GUI extends JFXApp {
 
+  //changeable base variables
+  var backgroundColor = "white"
+  var borderColor = "black"
+  var columnWidth = 100
+
+  //active column and card tracking
   var ColumnList = Seq[Column]()
   var CardList = Seq[Card]()
 
-  var dragActive = false
-  var xmax = 120
-  var lockcolumns = true
-  val columntopy = 50
-  var tick = 0
+  var cardTypes = Seq("text", "field", "img", "slider")
+  //card.data = selected type< (wip for custom card types)
 
-  var detectonCircle = new Circle {
+  var dragActive = false
+  var xmax = columnWidth + 20
+  val columntopy = 50
+
+  var detectonCircle = new Circle { //helper for drag and drop function
         radius = 5
         mouseTransparent = true
         visible = false
   }
 
-  private val borderStyle            = "" +
-    "-fx-background-color: white;" +
-    "-fx-border-color: black;" +
-    "-fx-border-width: 1;" +
-    "-fx-border-radius: 5;" +
-    "-fx-padding: 6;"
+  private val borderStyle = "" +
+    "-fx-background-color: " + backgroundColor +
+    ";-fx-border-color: " + borderColor +
+    ";-fx-border-width: 1" +
+    ";-fx-border-radius: 5" +
+    ";-fx-padding: 6;"
 
   val panelsPane = new Pane() {
       maxWidth = 800
       maxHeight = 500
 
-      val test = new Column().co
-
+      val column0 = new Column().co
       var newColumnButton = new Button("add column") {
         onAction = _ => {
           val newColumn = new Column().co
           children += newColumn
           newColumn.relocate(this.layoutX.value, this.layoutY.value)
-          this.relocate(this.layoutX.value + 120, this.layoutY.value)
-          xmax += 120
+          this.relocate(this.layoutX.value + columnWidth + 20, this.layoutY.value)
+          xmax += columnWidth + 20
         }
       }
       val dragModeCheckbox = new CheckBox("lock columns") {
         margin = Insets(6)
       }
 
-      test.relocate(0, columntopy)
-      newColumnButton.relocate(120,columntopy)
+      column0.relocate(0, columntopy)
+      newColumnButton.relocate(columnWidth+20,columntopy)
       dragModeCheckbox.relocate(0,0)
       detectonCircle.relocate(0,0)
 
-      children = Seq(test, newColumnButton, dragModeCheckbox, detectonCircle)
+      children = Seq(column0, newColumnButton, dragModeCheckbox, detectonCircle)
   }
 
   stage = new JFXApp.PrimaryStage {
@@ -100,63 +106,48 @@ object GUI extends JFXApp {
       onMouseDragged = (me: MouseEvent) => {
         //println("current choords: " + me.sceneX + " " + me.sceneY)
         dragActive = true
-        //detectonCircle.relocate(detectonCircle.translateX.value-me.x , detectonCircle.translateY.value-me.y)
       }
-
       onMouseMoved = (me: MouseEvent) => {
         detectonCircle.relocate(me.x-detectonCircle.radius.value/2, me.y-detectonCircle.radius.value/2)
-        //println("current choords: " + me.sceneX + " " + me.sceneY)
-        //detectonCircle.relocate(detectonCircle.translateX.value - me.x , detectonCircle.translateY.value - me.y)
       }
 
-      //intersection
       root = new BorderPane() {
           top = panelsPane
       }
     }
   }
 
-   private var startX: Double = 0d
-   private var startY: Double = 0d
-   private var nodeX:  Double = 0d
-   private var nodeY:  Double = 0d
-
-  var currentlyHovered: Option[Node] = None
-  var currentlyDragged: Option[Node] = None
-  var currentData: Option[String] = None
-  var overlapped = (None, false)
-
-  def newText(s: String): Node = new TextField() {
-          prefWidth = 90
-          prefHeight = 10
-          promptText = s
-  }
-
-
-
+  //cards and column classes
 
   class Column(title: String = "Title", cards: Seq[Card] = Seq()) {
+
     ColumnList = ColumnList :+ this
-    var co: VBox = new VBox(6) {
-      prefWidth = 100
+
+    var co: VBox = new VBox(6) {  // card node
+      prefWidth = columnWidth
       prefHeight = 50
       val header = newText(title)
       val addCardButton = new Button("Add card") {
-      onAction = _ => {
-        addCard()
-      }
+        onAction = _ => {
+          addCard()
+        }
       }
       children = Seq(header, addCardButton)
       style = borderStyle
     }
 
-    if(cards.nonEmpty) cards.foreach(this.addCustomCard(_))
+    if(cards.nonEmpty) cards.foreach(this.addCustomCard(_)) //helper for creating board
 
+    //column functions
     def relocate(x: Double, y: Double) = co.relocate(x,y)
     def addCard(): Unit = {
       val next = new Card(this)
       CardList = CardList :+ next
       co.children.add(next.ca)
+    }
+    def addCustomCard(card: Card): Unit = {
+      co.children.add(card.ca)
+      card.p = this
     }
     def removeCard(n: Node): Unit = {
       var removed = n
@@ -164,59 +155,46 @@ object GUI extends JFXApp {
         co.getChildren.remove(n)
       }
     }
-    def addCustomCard(card: Card): Unit = {
-      co.children.add(card.ca)
-    }
+
   }
 
-
+  //drag and drop helpers
+   private var nodeX:  Double = 0d
+   private var nodeY:  Double = 0d
 
 
   class Card(parent: Column, data: Node = newText("cardtext")) {
+
     CardList = CardList :+ this
-    var p = parent
-    def deleteThis(): Unit = p.removeCard(ca)
+
+    var p: Column = parent
+
     var ca: VBox = new VBox(6) {
-      prefWidth = 100
+      prefWidth = columnWidth
       prefHeight = 50
       val text = data
 
       children = Seq(text)
       style = borderStyle
 
-      def undoDrag() = {
-        println("undo")
-        this.translateX = 0
-        this.translateY = 0
-      }
-      //detect interaction
+      //detect interaction for cards
       filterEvent(MouseEvent.Any) {
         me: MouseEvent =>
           if(!dragActive)  {
             me.eventType match {
               case MouseEvent.MousePressed =>
-                  //this.toFront()
-                  startX = me.sceneX
-                  startY = me.sceneY
                   nodeX = this.translateX() - me.sceneX
                   nodeY = this.translateY() - me.sceneY
-              case MouseEvent.MouseMoved =>
               case _ =>
             }
           }
           else if (dragActive) {
             me.eventType match {
-              case MouseDragEvent.MouseDragEntered => {
-                currentlyHovered = Some(this.parent.get())
-                currentlyDragged = Some(this)
-                println(currentlyHovered)
-              }
-              case MouseDragEvent.MouseDragExited => currentlyHovered = None
               case MouseEvent.MouseDragged => detectonCircle.relocate(me.sceneX-detectonCircle.radius.value/2, me.sceneY-detectonCircle.radius.value/2)
                 dragActive = true
+                this.toFront()
                 this.translateX = nodeX + me.sceneX
                 this.translateY = nodeY + me.sceneY
-
               case MouseEvent.MouseReleased =>
                 if(checkOverlapp().nonEmpty && dragActive){
                   deleteThis()
@@ -224,10 +202,7 @@ object GUI extends JFXApp {
                   goalColumn.get.addCustomCard(Card.this)
                   this.undoDrag()
                 } else undoDrag()
-                currentlyDragged = None
                 dragActive = false
-                println("released")
-              case MouseEvent.MouseMoved =>
               case _ =>
             }
             me.consume()
@@ -243,193 +218,31 @@ object GUI extends JFXApp {
             }
             i
           }
-          def changeColumn() = {
-           println("change")
-
-          }
-      }
-    }
-
-  }
-
-}
-/*
-private val columnDragLock = new BooleanProperty(this, "lock columns", true)
-  var dragActive = false
-  var xmax = 120
-
-  private val borderStyle            = "" +
-    "-fx-background-color: white;" +
-    "-fx-border-color: black;" +
-    "-fx-border-width: 1;" +
-    "-fx-border-radius: 5;" +
-    "-fx-padding: 6;"
-
-  stage = new JFXApp.PrimaryStage {
-    title = "Kabaan board"
-    scene = new Scene(800,600) {
-
-    val topPane = new HBox() {
-      maxWidth = 800
-      maxHeight = 50
-
-      var title = new TextField(){
-        maxWidth = 140
-        maxHeight = 30
-      }
-      val dragModeCheckbox = new CheckBox("lock columns") {
-        margin = Insets(6)
-        selected = columnDragLock()
-      }
-      title.relocate(0,0)
-      dragModeCheckbox.relocate(100,0)
-      children = Seq(title, dragModeCheckbox)
-    }
-
-    val columnPane = new Pane() {
-      maxWidth = 800
-      maxHeight = 550
-
-      var column1 = makeDraggable(createColumn())
-      var newColumnButton = new Button("add column") {
-        onAction = _ => {
-          val newColumn = makeDraggable(createColumn())
-          children += newColumn
-          newColumn.relocate(this.layoutX.value, this.layoutY.value)
-          this.relocate(this.layoutX.value + 120, this.layoutY.value)
-          xmax += 120
-        }
-      }
-      column1.relocate(0,40)
-      newColumnButton.relocate(120,40)
-      children = Seq(column1, newColumnButton)
-    }
-
-      onMouseDragged = (me: MouseEvent) => {
-        dragActive = true
       }
 
-      onMouseMoved = (me: MouseEvent) => {
-        println("current choords moved: " + me.x + " " + me.y + " and xmax: " + xmax)
-      }
-
-      root = new BorderPane() {
-        top = topPane
-        center = columnPane
-      }
-
-      def columnIntersections(node: Node): Unit = {
-        var intersection: Seq[Node] = Seq()
-        for(n <- columnPane.children) {
-        }
-      }
-
-
-    }
-  }
-
-  private final class dragValues {
-    var startX: Double = 0d
-    var startY: Double = 0d
-    var nodeX:  Double = 0d
-    var nodeY:  Double = 0d
-  }
-
-  val columnXPositions = Seq(0, 120)
-
-  private def makeDraggable(node: Node): Node = {
-
-    val dragChoords = new dragValues()
-    def undoDrag() = {
-      println("undo")
-      node.translateX = 0
-      node.translateY = 0
-    }
-    def swapPositions() = {
-
-    }
-    new Group(node) {
-      filterEvent(MouseEvent.Any) {
-        me: MouseEvent =>
-          if(!dragActive)  {
-            me.eventType match {
-              case MouseEvent.MousePressed =>
-                  dragChoords.startX = node.translateX.value
-                  dragChoords.startY = node.translateY.value
-                  dragChoords.nodeX = node.translateX() - me.x
-                  dragChoords.nodeY = node.translateY() - me.y
-              case _ =>
-            }
-          }
-          else if (dragActive) {
-            me.eventType match {
-              case MouseEvent.MouseDragged =>
-                  println("current choords node dragged: " + me.sceneX + " " + me.sceneY)
-                  dragActive = true
-                  node.translateX = dragChoords.nodeX + me.x
-                  node.translateY = dragChoords.nodeY + me.y
-              case MouseEvent.MouseReleased =>
-                  dragActive = false
-                  if(me.sceneX >= xmax || me.sceneY < 40) undoDrag()
-                  else {
-                    println("normal drop")
-                    println("screnx: " + me.sceneX)
-                    println("localx: " + node.parentToLocal(me.sceneX, 40))
-                    node.translateX =node.parentToLocal ((me.sceneX/120 - 1).floor * 120, 0).getX
-                    node.translateY = 0
-                  }
-              case MouseEvent.MouseMoved =>
-              case _ =>
-            }
-            me.consume()
-          }
-          else {}
-      }
-      //support functions
+      //node functions
       def undoDrag() = {
-          println(xmax)
-          println(node.translateX.value)
-          println("undo")
-          node.relocate(dragChoords.startX, dragChoords.startY)
+        this.translateX = 0
+        this.translateY = 0
       }
-      def checkOverlapp() = {
 
-      }
     }
+
+    //card functions
+    def deleteThis(): Unit = p.removeCard(ca)
+
   }
 
-  def createColumn(): Node = new VBox(6) {
-    prefWidth = 100
-    prefHeight = 50
-    val isColumn = true
+  def newText(s: String): Node = new TextField() {
+          prefWidth = columnWidth - 10
+          prefHeight = 10
+          promptText = s
+  }
 
-    val title = new TextField() {
-      promptText = "title"
-    }
-
-    val addCard = new Button("Add card") {
-      onAction = _ => {
-        val next = makeDraggable(createCard())
-        children += next
-        println(children)
-      }
-    }
-
-    children = Seq(title, addCard)
-    style = borderStyle
-
-    def createCard(): Node = new VBox(6) {
-      val isColumn = false
-      prefWidth = 100
-      prefHeight = 10
-      val text = new TextField() {
-        promptText = "card text"
-      }
-      children = Seq(text)
-      //alignment = Pos.CenterLeft
-      style = borderStyle
-    }
+  def newTextarea(s: String): Node = new TextArea() {
+          prefWidth = columnWidth - 10
+          prefHeight = 20
+          promptText = s
   }
 
 }
- */
