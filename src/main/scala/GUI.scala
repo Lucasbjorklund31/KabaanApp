@@ -91,6 +91,7 @@ object GUI extends JFXApp {
       maxWidth = 800
       maxHeight = 500
 
+      //top panel
       val title = new HBox(){
           prefWidth = 150
           prefHeight = 30
@@ -114,6 +115,7 @@ object GUI extends JFXApp {
 
           children = Seq(label)
       }
+
       val cardTypeLabel = new Label("Card type")
       val cardTypeSelector = new ComboBox(cardTypes)
       cardTypeSelector.onAction = (e: Any) => typeChanged = true
@@ -122,6 +124,20 @@ object GUI extends JFXApp {
       val cardColorSelector = new ComboBox(cardColors)
       cardColorSelector.onAction = (e: Any) => println(cardTypeSelector)
 
+      val taggFilterLabel = new Label("tagg filter")
+      val taggFilter = new TextField(){
+        prefWidth = 100
+        prefHeight = 20
+        promptText = "card tagg filter"
+      }
+      taggFilter.text.onChange {
+        CardList.foreach(a =>
+        if(a.cardTagg == taggFilter.text.value) a.ca.visible = true
+        else a.ca.visible = false)
+      }
+
+
+      //columns and card functions
       val column0 = new Column()
       var newColumnButton = new Button("add column") {
           onAction = _ => {
@@ -138,11 +154,14 @@ object GUI extends JFXApp {
       cardTypeSelector.relocate(150, 15)
       cardColorLabel.relocate(250,0)
       cardColorSelector.relocate(250,15)
+      taggFilterLabel.relocate(380,0)
+      taggFilter.relocate(380,15)
+
       column0.co.relocate(0, columntopy)
       newColumnButton.relocate(columnWidth+20,columntopy)
       detectonCircle.relocate(0,0)
 
-      children = Seq(title, cardTypeLabel, cardTypeSelector, cardColorLabel, cardColorSelector, column0.co, newColumnButton, detectonCircle)
+      children = Seq(title, cardTypeLabel, cardTypeSelector, cardColorLabel, cardColorSelector, taggFilterLabel, taggFilter, column0.co, newColumnButton, detectonCircle)
   }
 
   stage = new JFXApp.PrimaryStage {
@@ -230,18 +249,19 @@ object GUI extends JFXApp {
       CardList = CardList :+ this
 
       var p: Column = parent
+      var cardTagg = ""
 
       var ca: VBox = new VBox(6) {
           //background = cardStyle()
           prefWidth = columnWidth
           prefHeight = 50
           var d = data
-          val tagg = new Label("tagg")
+          val tagg = new Label("")
           val input = new TextField(){
               visible = true
               prefWidth = 100
               prefHeight = 20
-              promptText = tagg.text.value
+              promptText = "tagg"
           }
           tagg.font = new Font("Cabria", 10)
           onMouseEntered = (me: MouseEvent) => {
@@ -252,6 +272,7 @@ object GUI extends JFXApp {
           }
           input.text.onChange {
             tagg.text = input.text.value
+            cardTagg = input.text.value
           }
 
           children = Seq(tagg, d)
