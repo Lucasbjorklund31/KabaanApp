@@ -37,32 +37,47 @@ import scalafx.scene.{Group, Node, Scene}
 
 object GUI extends JFXApp {
 
-  //changeable base variables
+  //Editgables
+  //background variables
+   var backgroundColor = "gray"
+
+  //column variables
   var columnBackgroundColor = "white"
   var columnWidth = 150
 
-  //active column and card tracking
+
+
+  //Stock
+  //background variables
   var ColumnList = Seq[Column]()
   var CardList = Seq[Card]()
+  var dragActive = false
+  var xmax = columnWidth + 20
+  val columntopy = 50
+
 
   //drop down options for cards
   var cardTypes = Seq("field", "area", "img", "slider")
   var typeChanged = false
-  var cardColors = Seq("White", "Black", "LightGray", "LightBlue", "LightGreen", "LightYellow", "Red", "LightCyan")
+  var cardColors = Seq("White", "Black", "LightGray", "LightBlue", "LightGreen", "LightYellow", "Red", "Cyan", "Pink", "Purple", "Brown", "Violet")
   var colorChanged = false
-  //card.data = selected type< (wip for custom card types)
 
-  def borderStyle() = {"" +
-    "-fx-background-color: " + columnBackgroundColor +
+  val border = {
     ";-fx-border-color: Black" +
     ";-fx-border-width: 1" +
     ";-fx-border-radius: 5" +
     ";-fx-padding: 6;"
   }
 
-  var dragActive = false
-  var xmax = columnWidth + 20
-  val columntopy = 50
+  def columnStyle() = {
+    "-fx-background-color: " + columnBackgroundColor +
+    border
+  }
+
+  def cardStyle() = {
+    "-fx-background-color: " + panelsPane.cardColorSelector.value.value +
+    border
+  }
 
   var detectonCircle = new Circle { //helper for drag and drop function
         radius = 5
@@ -98,7 +113,6 @@ object GUI extends JFXApp {
           }
 
           children = Seq(label)
-          //style = borderStyle
       }
       val cardTypeLabel = new Label("Card type")
       val cardTypeSelector = new ComboBox(cardTypes)
@@ -108,11 +122,11 @@ object GUI extends JFXApp {
       val cardColorSelector = new ComboBox(cardColors)
       cardColorSelector.onAction = (e: Any) => println(cardTypeSelector)
 
-      val column0 = new Column().co
+      val column0 = new Column()
       var newColumnButton = new Button("add column") {
           onAction = _ => {
-              val newColumn = new Column().co
-              children += newColumn
+              val newColumn = new Column()
+              children += newColumn.co
               newColumn.relocate(this.layoutX.value, this.layoutY.value)
               this.relocate(this.layoutX.value + columnWidth + 20, this.layoutY.value)
               xmax += columnWidth + 20
@@ -124,11 +138,11 @@ object GUI extends JFXApp {
       cardTypeSelector.relocate(150, 15)
       cardColorLabel.relocate(250,0)
       cardColorSelector.relocate(250,15)
-      column0.relocate(0, columntopy)
+      column0.co.relocate(0, columntopy)
       newColumnButton.relocate(columnWidth+20,columntopy)
       detectonCircle.relocate(0,0)
 
-      children = Seq(title, cardTypeLabel, cardTypeSelector, cardColorLabel, cardColorSelector, column0, newColumnButton, detectonCircle)
+      children = Seq(title, cardTypeLabel, cardTypeSelector, cardColorLabel, cardColorSelector, column0.co, newColumnButton, detectonCircle)
   }
 
   stage = new JFXApp.PrimaryStage {
@@ -149,6 +163,7 @@ object GUI extends JFXApp {
           root = new BorderPane() {
               top = panelsPane
           }
+
       }
   }
 
@@ -169,7 +184,7 @@ object GUI extends JFXApp {
           }
 
           children = Seq(header, addCardButton)
-          style = borderStyle()
+          style = columnStyle()
       }
 
       if(cards.nonEmpty) cards.foreach(this.addCustomCard(_)) //helper for creating board
@@ -205,14 +220,10 @@ object GUI extends JFXApp {
      case "field" => newTextField("textfield")
      case "area" => newTextarea("textarea")
      //case "img" =>
-     //case "slider" =>
+     case "slider" => newSlider("slider")
    }
 
-   def  cardColor() = println("yes")
-
-
-
-
+   def  cardColor() = panelsPane.cardColorSelector.value.value
 
   class Card(parent: Column, data: Node = newTextField("cardtext")) {
 
@@ -221,12 +232,13 @@ object GUI extends JFXApp {
       var p: Column = parent
 
       var ca: VBox = new VBox(6) {
+          //background = cardStyle()
           prefWidth = columnWidth
           prefHeight = 50
           var d = data
 
           children = Seq(d)
-          style = borderStyle()
+          style = cardStyle()
 
       //detect interaction for cards
       filterEvent(MouseEvent.Any) {
@@ -288,17 +300,20 @@ object GUI extends JFXApp {
   }
 
   def newTextField(s: String): Node = new TextField() {
-          println("field")
           prefWidth = columnWidth - 10
           prefHeight = 10
           promptText = s
   }
 
   def newTextarea(s: String): Node = new TextArea() {
-          println("area")
           prefWidth = columnWidth - 10
           prefHeight = 20
           promptText = s
+  }
+
+  def newSlider(s: String): Node = new Slider() {
+          prefWidth = columnWidth - 10
+          prefHeight = 20
   }
 
 }
