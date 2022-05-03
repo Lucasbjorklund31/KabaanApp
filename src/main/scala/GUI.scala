@@ -1,38 +1,11 @@
-import DragAndDropTest.stage
 import scalafx.Includes._
 import scalafx.application.JFXApp
-import scalafx.scene.Scene
-import scalafx.scene.control.{Button, Label}
-import scalafx.scene.layout.Pane
-import scalafx.scene.paint.Color._
-import scalafx.scene.shape.{Circle, Rectangle}
-import scalafx.scene.text.Font
-import scalafx.scene.control.Label
-import scalafx.scene.control.CheckBox
-import scalafx.scene.control.Button
-import scalafx.scene.layout.StackPane
-import scalafx.Includes._
-import scalafx.geometry.Insets
-import scalafx.scene.canvas.Canvas
-import scalafx.scene.layout.VBox
-import scalafx.scene.layout.HBox
-import scalafx.scene.layout.GridPane
-import scalafx.scene.layout.Background
-import scalafx.scene.layout.BackgroundFill
-import scalafx.scene.layout.CornerRadii
-import scalafx.scene.layout.ColumnConstraints
-import scalafx.scene.layout.RowConstraints
-import scalafx.application.JFXApp.PrimaryStage
-import scalafx.geometry.Point2D
-import scalafx.scene.input.{MouseDragEvent, MouseEvent}
-import scalafx.stage.{StageStyle, WindowEvent}
-import scalafx.beans.property.BooleanProperty
-import scalafx.collections.ObservableBuffer
-import scalafx.geometry.{Insets, Pos}
+import scalafx.scene.{Node, Scene}
 import scalafx.scene.control._
 import scalafx.scene.input.MouseEvent
 import scalafx.scene.layout._
-import scalafx.scene.{Group, Node, Scene}
+import scalafx.scene.shape.Circle
+import scalafx.scene.text.Font
 
 
 object GUI extends JFXApp {
@@ -51,6 +24,7 @@ object GUI extends JFXApp {
   //background variables
   var ColumnList = Seq[Column]()
   var CardList = Seq[Card]()
+  var cardArcive = Seq[Card]()
   var dragActive = false
   var xmax = columnWidth + 20
   val columntopy = 50
@@ -148,6 +122,15 @@ object GUI extends JFXApp {
               xmax += columnWidth + 20
           }
       }
+      val removeBox = new VBox {
+          visible = false
+          prefWidth = columnWidth
+          prefHeight = 50
+          val title = new Label("delete Card")
+
+          children = Seq(title)
+          style = columnStyle()
+      }
 
       title.relocate(5,10)
       cardTypeLabel.relocate(150,0)
@@ -156,12 +139,13 @@ object GUI extends JFXApp {
       cardColorSelector.relocate(250,15)
       taggFilterLabel.relocate(380,0)
       taggFilter.relocate(380,15)
+      removeBox.relocate(0, 0)
 
       column0.co.relocate(0, columntopy)
       newColumnButton.relocate(columnWidth+20,columntopy)
       detectonCircle.relocate(0,0)
 
-      children = Seq(title, cardTypeLabel, cardTypeSelector, cardColorLabel, cardColorSelector, taggFilterLabel, taggFilter, column0.co, newColumnButton, detectonCircle)
+      children = Seq(title, cardTypeLabel, cardTypeSelector, cardColorLabel, cardColorSelector, taggFilterLabel, taggFilter, column0.co, newColumnButton, removeBox, detectonCircle)
   }
 
   stage = new JFXApp.PrimaryStage {
@@ -265,7 +249,7 @@ object GUI extends JFXApp {
           }
           tagg.font = new Font("Cabria", 10)
           onMouseEntered = (me: MouseEvent) => {
-              children.add(input)
+              if(!children.contains(input)) children.add(input)
           }
           onMouseExited = (me: MouseEvent) => {
               children.remove(input)
@@ -291,21 +275,23 @@ object GUI extends JFXApp {
               }
               else if (dragActive) {
                   me.eventType match {
-                      case MouseEvent.MouseDragged => detectonCircle.relocate(me.sceneX-detectonCircle.radius.value/2, me.sceneY-detectonCircle.radius.value/2)
+                      case MouseEvent.MouseDragged =>
+                          detectonCircle.relocate(me.sceneX-detectonCircle.radius.value/2, me.sceneY-detectonCircle.radius.value/2)
                           dragActive = true
-                          this.toFront()
                           this.translateX = nodeX + me.sceneX
                           this.translateY = nodeY + me.sceneY
-                          this.toFront()
+                          panelsPane.removeBox.visible = true
                       case MouseEvent.MouseReleased =>
                           if(checkOverlapp().nonEmpty && dragActive){
                               deleteThis()
                               var goalColumn = ColumnList.find(a => a.co.toString.contains(checkOverlapp().head.toString))
-                              goalColumn.get.addCustomCard(Card.this)
+                              if(goalColumn.isEmpty) cardArcive = cardArcive :+ Card.this
+                              else goalColumn.get.addCustomCard(Card.this)
                               this.undoDrag()
                           }
                           else undoDrag()
                           dragActive = false
+                          panelsPane.removeBox.visible = false
                       case _ =>
                   }
                   me.consume()
