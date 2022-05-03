@@ -57,12 +57,12 @@ object GUI extends JFXApp {
 
 
   //drop down options for cards
-  var cardTypes = Seq("field", "area", "img", "slider")
+  var cardTypes = Seq("field", "area", "slider")
   var typeChanged = false
   var cardColors = Seq("White", "Black", "LightGray", "LightBlue", "LightGreen", "LightYellow", "Red", "Cyan", "Pink", "Purple", "Brown", "Violet")
   var colorChanged = false
 
-  val border = {
+  val border = { //stock borders
     ";-fx-border-color: Black" +
     ";-fx-border-width: 1" +
     ";-fx-border-radius: 5" +
@@ -236,8 +236,25 @@ object GUI extends JFXApp {
           prefWidth = columnWidth
           prefHeight = 50
           var d = data
+          val tagg = new Label("tagg")
+          val input = new TextField(){
+              visible = true
+              prefWidth = 100
+              prefHeight = 20
+              promptText = tagg.text.value
+          }
+          tagg.font = new Font("Cabria", 10)
+          onMouseEntered = (me: MouseEvent) => {
+              children.add(input)
+          }
+          onMouseExited = (me: MouseEvent) => {
+              children.remove(input)
+          }
+          input.text.onChange {
+            tagg.text = input.text.value
+          }
 
-          children = Seq(d)
+          children = Seq(tagg, d)
           style = cardStyle()
 
       //detect interaction for cards
