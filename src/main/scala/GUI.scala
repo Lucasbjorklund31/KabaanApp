@@ -31,7 +31,7 @@ object GUI extends JFXApp {
 
 
   //drop down options for cards
-  var cardTypes = Seq("field", "area", "slider")
+  var cardTypes = Seq("field", "area", "checkbox", "slider")
   var typeChanged = false
   var cardColors = Seq("White", "Black", "LightGray", "LightBlue", "LightGreen", "LightYellow", "Red", "Cyan", "Pink", "Purple", "Brown", "Violet")
   var colorChanged = false
@@ -69,7 +69,7 @@ object GUI extends JFXApp {
       val title = new HBox(){
           prefWidth = 150
           prefHeight = 30
-          val label = new Label("title")
+          val label = new Label("Title")
           var input = new TextField(){
               visible = true
               prefWidth = 100
@@ -98,11 +98,11 @@ object GUI extends JFXApp {
       val cardColorSelector = new ComboBox(cardColors)
       cardColorSelector.onAction = (e: Any) => println(cardTypeSelector)
 
-      val taggFilterLabel = new Label("tagg filter")
+      val taggFilterLabel = new Label("Tagg filter")
       val taggFilter = new TextField(){
         prefWidth = 100
         prefHeight = 20
-        promptText = "card tagg filter"
+        promptText = "Card tagg filter"
       }
       taggFilter.text.onChange {
         CardList.foreach(a =>
@@ -110,10 +110,13 @@ object GUI extends JFXApp {
         else a.ca.visible = false)
       }
 
+      //val cardArchiveLabel = ???
+      //val cardArchive = ???
+
 
       //columns and card functions
       val column0 = new Column()
-      var newColumnButton = new Button("add column") {
+      var newColumnButton = new Button("Add column") {
           onAction = _ => {
               val newColumn = new Column()
               children += newColumn.co
@@ -126,26 +129,44 @@ object GUI extends JFXApp {
           visible = false
           prefWidth = columnWidth
           prefHeight = 50
-          val title = new Label("delete Card")
+          val title = new Label("Delete Card")
 
           children = Seq(title)
           style = columnStyle()
       }
+      val archive = new Column() {
+        co.children.clear()
+        co.prefWidth = 80
+        co.prefHeight = 20
+        val title = new Label("Archive")
+        co.onMouseEntered = (me: MouseEvent) => {
+            cardArcive.foreach(a => this.addCustomCard(a))
+        }
+
+        co.children = Seq(title)
+        co.style = columnStyle()
+
+        def hideCards() = { //hides the cards the archive while the archive is not interacted with
+          co.children.clear()
+          co.children.add(title)
+        }
+      }
 
       title.relocate(5,10)
       cardTypeLabel.relocate(150,0)
-      cardTypeSelector.relocate(150, 15)
+      cardTypeSelector.relocate(150, 20)
       cardColorLabel.relocate(250,0)
-      cardColorSelector.relocate(250,15)
+      cardColorSelector.relocate(250,20)
       taggFilterLabel.relocate(380,0)
-      taggFilter.relocate(380,15)
+      taggFilter.relocate(380,20)
       removeBox.relocate(0, 0)
+      archive.relocate(500, 15)
 
       column0.co.relocate(0, columntopy)
       newColumnButton.relocate(columnWidth+20,columntopy)
       detectonCircle.relocate(0,0)
 
-      children = Seq(title, cardTypeLabel, cardTypeSelector, cardColorLabel, cardColorSelector, taggFilterLabel, taggFilter, column0.co, newColumnButton, removeBox, detectonCircle)
+      children = Seq(title, cardTypeLabel, cardTypeSelector, cardColorLabel, cardColorSelector, taggFilterLabel, taggFilter, column0.co, newColumnButton, removeBox, archive.co, detectonCircle)
   }
 
   stage = new JFXApp.PrimaryStage {
@@ -203,7 +224,7 @@ object GUI extends JFXApp {
           co.children.add(next.ca)
       }
       def addCustomCard(card: Card): Unit = {
-          co.children.add(card.ca)
+          if(!co.children.contains(card.ca)) co.children.add(card.ca)
           card.p = this
       }
       def removeCard(n: Node): Unit = {
@@ -215,15 +236,18 @@ object GUI extends JFXApp {
 
   }
 
+
+
+
   //drag and drop helpers
    private var nodeX:  Double = 0d
    private var nodeY:  Double = 0d
 
    def cardType(): Node = panelsPane.cardTypeSelector.value.value match {
      case "field" => newTextField("textfield")
-     case "area" => newTextarea("textarea")
-     //case "img" =>
-     case "slider" => newSlider("slider")
+     case "area" => newTextarea()
+     case "slider" => newSlider()
+     case "checkbox" => newCheckBox()
    }
 
    def  cardColor() = panelsPane.cardColorSelector.value.value
@@ -284,14 +308,21 @@ object GUI extends JFXApp {
                       case MouseEvent.MouseReleased =>
                           if(checkOverlapp().nonEmpty && dragActive){
                               deleteThis()
+                              panelsPane.archive.hideCards()
+                              println(cardArcive.map(_.ca.toString))
+                              println(this.toString)
+                              cardArcive = cardArcive.filter(_ != Card.this)
                               var goalColumn = ColumnList.find(a => a.co.toString.contains(checkOverlapp().head.toString))
                               if(goalColumn.isEmpty) cardArcive = cardArcive :+ Card.this
-                              else goalColumn.get.addCustomCard(Card.this)
+                              else {
+                                goalColumn.get.addCustomCard(Card.this)
+                              }
                               this.undoDrag()
                           }
                           else undoDrag()
                           dragActive = false
                           panelsPane.removeBox.visible = false
+                          println(cardArcive)
                       case _ =>
                   }
                   me.consume()
@@ -305,12 +336,13 @@ object GUI extends JFXApp {
                       if(!this.parent.toString.contains(n.toString)) i = i:+n
                     }
                 }
+                println("cardarchive: " + cardArcive)
                 i
             }
       }
 
           //node functions
-          def undoDrag() = {
+          def undoDrag() = { //returns node back to its columnm position before drag
               this.translateX = 0
               this.translateY = 0
           }
@@ -329,15 +361,44 @@ object GUI extends JFXApp {
           promptText = s
   }
 
-  def newTextarea(s: String): Node = new TextArea() {
+  def newTextarea(): Node = new TextArea() {
           prefWidth = columnWidth - 10
           prefHeight = 20
-          promptText = s
+          promptText = "textarea"
   }
 
-  def newSlider(s: String): Node = new Slider() {
+  def newSlider(): Node = new Slider() {
           prefWidth = columnWidth - 10
           prefHeight = 20
+  }
+
+  def newCheckBox() = {
+
+      new VBox {
+          var tasks = Seq[CheckBox]()
+
+          def addTask(s: String) = {
+            val t = new CheckBox(s)
+            children.add(t)
+            tasks = tasks :+ t
+          }
+
+          var cardTitle = new TextField() {
+            promptText = "main task"
+          }
+
+          val taskName = new TextField() {
+            promptText = "sub task"
+          }
+          val addTaskButton = new Button("Add task") {
+              onAction = _ => {
+                addTask(taskName.text.value)
+                taskName.text = ""
+              }
+          }
+          children = Seq(cardTitle, taskName, addTaskButton)
+
+      }
   }
 
 }
