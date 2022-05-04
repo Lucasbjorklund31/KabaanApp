@@ -307,15 +307,14 @@ object GUI extends JFXApp {
                           panelsPane.removeBox.visible = true
                       case MouseEvent.MouseReleased =>
                           if(checkOverlapp().nonEmpty && dragActive){
+                              var goalColumn = ColumnList.find(a => a.co.toString.contains(checkOverlapp().head.toString))
                               deleteThis()
                               panelsPane.archive.hideCards()
-                              println(cardArcive.map(_.ca.toString))
-                              println(this.toString)
-                              cardArcive = cardArcive.filter(_ != Card.this)
-                              var goalColumn = ColumnList.find(a => a.co.toString.contains(checkOverlapp().head.toString))
-                              if(goalColumn.isEmpty) cardArcive = cardArcive :+ Card.this
+                              if(cardArcive.contains(Card.this) && goalColumn.isEmpty) cardArcive = cardArcive.filter(_ != Card.this) //if card already is in the archive and is removed it will be removed from the board completely
                               else {
-                                goalColumn.get.addCustomCard(Card.this)
+                                  cardArcive = cardArcive.filter(_ != Card.this)                //removes card from archive so it can be added to its new parent
+                                  if(goalColumn.isEmpty) cardArcive = cardArcive :+ Card.this   //if the parent is empty aka the remove box => add to archive
+                                  else goalColumn.get.addCustomCard(Card.this)                  //else add to the new column
                               }
                               this.undoDrag()
                           }
