@@ -25,13 +25,20 @@ object GUI extends JFXApp {
   //Stock
   //background variables
   var boardList = Seq[Board]()
+
+  var currentTitle = ""
   var currentBoard: Option[Board] = None
-  var ColumnList = Seq[Column]()
-  var CardList = Seq[Card]()
+  var currentMenuBoard: Option[VBox] = None
+  var columnList = Seq[Column]()
+  var cardList = Seq[Card]()
   var cardArcive = Seq[Card]()
+
   var dragActive = false
+  var isnewboard = false
   var xmax = columnWidth + 20
   val columntopy = 50
+
+
 
 
   //drop down options for cards
@@ -96,19 +103,84 @@ object GUI extends JFXApp {
           }
   }
 
+
+
+
+  class Board extends JFXApp {
+        var title: String = ""
+        var lastEdited: String = ""
+        var columns: Seq[Column] = Seq[Column]()
+        var cards: Seq[Card] = Seq[Card]()
+  }
+
+  def createBoard(): Board = {
+            val next = new Board()
+            isnewboard = true
+            currentBoard = Some(next)
+            boardList = boardList :+ next
+            stage = mainBoard()
+            next
+  }
+
+  def updateBoardMenu() = {
+    val nextBox = boardDisplayBox(boardList.last)
+    loadBoardMenu.children.add( nextBox )
+    loadBoardMenu.children.filter(_.toString.contains(""))
+    isnewboard = false
+  }
+
+
+
+   def boardDisplayBox(b: Board) = new HBox {
+            val relatedBoard = b
+            val name = new Label(b.title){
+              visible = true
+              font = new Font("Cabria", 15)
+            }
+            var ledit = new Label(b.lastEdited){
+              visible = true
+              font = new Font("Cabria", 15)
+            }
+            var edit = new Button("Edit board") {
+                onAction = _ => {
+                  currentBoard = Some(b)
+                  columnList = b.columns
+                  cardList = b.cards
+                  currentTitle = b.title
+                  showBoard()
+                }
+            }
+
+            children = Seq(name, edit)
+            style = GUI.border
+   }
+
+   def resetBoard(): Unit = {
+      var edited = currentBoard.get
+      edited.title = currentTitle
+      edited.lastEdited = Calendar.getInstance().getTime.toString.dropRight(9) + Calendar.getInstance().getTime.toString.takeRight(4)
+      currentBoard = None
+      edited.columns = Seq()
+      if(columnList.nonEmpty) for(column <- columnList) edited.columns = edited.columns :+ column
+      columnList = Seq()
+      edited.cards = Seq()
+      if(cardList.nonEmpty) for(card <- cardList) edited.cards = edited.cards :+ card
+      cardList = Seq()
+      currentBoard = None
+  }
+
   //scene main/starter components
-  def panelsPane(): Pane = new Pane() {
+  def panelsPane(loadColumn: Seq[Column] = Seq(), loadCards: Seq[Card] = Seq()): Pane = new Pane() {
 
       maxWidth = windowWidth
       maxHeight = windowHeigth
 
       //top panel
-      val title = new HBox(){
+      val title = new HBox() {
           prefWidth = 150
           prefHeight = 30
           val label = new Label("Title")
           var input = new TextField(){
-              visible = true
               prefWidth = 100
               prefHeight = 20
               promptText = label.text.value
@@ -121,7 +193,7 @@ object GUI extends JFXApp {
               children.remove(input)
           }
           input.text.onChange {
-             currentBoard.get.title = input.text.value
+             currentTitle = input.text.value
              label.text = input.text.value
           }
 
@@ -139,7 +211,7 @@ object GUI extends JFXApp {
           promptText = "Card tagg filter"
       }
       taggFilter.text.onChange {
-          CardList.foreach(a =>
+          cardList.foreach(a =>
           if(taggFilter.text.value.isEmpty) a.ca.visible = true
           else {
           if(a.cardTagg == taggFilter.text.value) a.ca.visible = true
@@ -160,23 +232,22 @@ object GUI extends JFXApp {
 
       val saveBoard = new Button("Save board") {
           onAction = _ => {
-              var edited = currentBoard.get
-              edited.title = title.label.text.get()
-              edited.lastEdited = Calendar.getInstance().getTime.toString.dropRight(9) + Calendar.getInstance().getTime.toString.takeRight(4)
-              currentBoard = None
-              for(column <- ColumnList) edited.columns = edited.columns :+ column
-              ColumnList = Seq()
-              for(card <- CardList) edited.cards = edited.cards :+ card
-              CardList = Seq()
-
-
+              columnList = columnList.filter(_.co != archive.co)
+              println(boardList)
+              println(currentBoard)
+              println(currentTitle)
+              println(columnList)
+              println(cardList)
               showMenu()
           }
       }
 
-      onMouseMoved = (me: MouseEvent) => if(dragActive || !archive.co.hover.value) {
+      onMouseMoved = (me: MouseEvent) => {
+        if(dragActive || !archive.co.hover.value) {
         archive.hideCards()
         archive.co.toFront()
+        }
+        if(isnewboard) updateBoardMenu()
       }
 
       //node positions
@@ -196,10 +267,14 @@ object GUI extends JFXApp {
       detectonCircle.relocate(0,0)
 
       children = Seq(archive.co, title, cardTypeLabel, cardTypeSelector, cardColorLabel, cardColorSelector, taggFilterLabel, taggFilter, column0.co, newColumnButton, removeBox, saveBoard, detectonCircle)
-  }
 
-   def mainBoard() = {
-        //val board = b
+      if(loadColumn.nonEmpty) loadColumn.foreach(c => children.add(c.co))
+      if(loadCards.nonEmpty) loadCards.foreach(c => c.p.addCustomCard(c))
+      if(currentTitle != "") title.label.text = currentTitle
+
+  }
+//panelsPane(loadColumn: Seq[Column] = Seq(), loadCards: Seq[Card] = Seq()):
+  def mainBoard() = {
 
         new JFXApp.PrimaryStage {
 
@@ -214,57 +289,62 @@ object GUI extends JFXApp {
                 }
 
                 root = new BorderPane() {
-                    top = panelsPane()
+                    top = {
+                      if(isnewboard) {
+                        println("is new")
+                        panelsPane()
+                      }
+                      else {
+                        println("edit")
+                        panelsPane(columnList, cardList)
+                      }
+                    }
                 }
 
             }
        }
   }
 
-    def boardSelection() = new JFXApp.PrimaryStage {
+  val loadBoardMenu = new VBox {
+              prefWidth = 200
+              prefHeight = 100
 
-        title = "Board menu"
-        scene = new Scene(windowWidth, windowHeigth) {
+              val title = new Label("Boards")
 
-            root = new BorderPane() {
-                top = new Pane() {
+              val createBoardButton = new Button("create board"){
+                  onAction = _ => {
+                      createBoard()
+                  }
+              }
+              style = GUI.border
+              children = Seq(title, createBoardButton)
+  }
 
-                    //maxWidth = windowWidth
-                    //maxHeight = windowHeigth
+  def boardSelection() = new JFXApp.PrimaryStage {
 
-                    val loadBoardMenu = new VBox {
-                        //prefWidth = 400
-                        //prefHeight = 400
+      title = "Board menu"
+      scene = new Scene(windowWidth, windowHeigth) {
 
-                        val title = new Label("Boards")
+          root = new BorderPane() {
+              top = new Pane() {
 
-                        val createBoardButton = new Button("create board"){
-                            onAction = _ => {
-                                val next = new Board()
-                                currentBoard = Some(next)
-                                boardList = boardList :+ next
-                                stage = mainBoard()
-                             }
-                        }
-                        style = GUI.border
-                        children = Seq(title)
-                        for(b <- boardList) children.add(b.displayBox)
-                        children.add(createBoardButton)
-                    }
+                  onMouseMoved = (me: MouseEvent) => if(currentBoard.isDefined) resetBoard()
 
+                  loadBoardMenu.relocate(0, 0)
+                  children = loadBoardMenu
+              }
 
-                    loadBoardMenu.relocate(windowWidth/2, windowHeigth/2)
-                    children = loadBoardMenu
-                }
+          }
 
-            }
+      }
+  }
 
-        }
-    }
 
     stage = boardSelection()
     def showBoard() = stage = mainBoard()
     def showMenu() = stage = boardSelection()
+
+
 
 
     //drag and drop helpers
@@ -334,8 +414,9 @@ object GUI extends JFXApp {
   //cards and column classes
   class Column(title: String = "Title", cards: Seq[Card] = Seq()) {
 
-      ColumnList = ColumnList :+ this
-      //def position() = (this.co.scene.x, this.co.scene.y)
+      if(columnList == null) columnList = Seq()
+      columnList = columnList :+ this
+      //if(currentBoard != null) if(currentBoard.isDefined) currentBoard.get.columns = currentBoard.get.columns :+ this
 
       var co: VBox = new VBox(6) {  // card node
           prefWidth = columnWidth
@@ -360,7 +441,8 @@ object GUI extends JFXApp {
             if(typeChanged) new Card(this, cardType())
             else new Card(this)
           }
-          CardList = CardList :+ next
+          if(cardList == null) cardList = Seq()
+          cardList = cardList :+ next
           co.children.add(next.ca)
       }
       def addCustomCard(card: Card): Unit = {
@@ -379,7 +461,7 @@ object GUI extends JFXApp {
 
   class Card(parent: Column, data: Node = newTextField("cardtext")) {
 
-      CardList = CardList :+ this
+      //CardList = CardList :+ this
 
       var p: Column = parent
       var cardTagg = ""
@@ -434,7 +516,7 @@ object GUI extends JFXApp {
 
                       case MouseEvent.MouseReleased =>
                           if(checkOverlapp().nonEmpty && dragActive){
-                              var goalColumn = ColumnList.find(a => a.co.toString.contains(checkOverlapp().head.toString))
+                              var goalColumn = columnList.find(a => a.co.toString.contains(checkOverlapp().head.toString))
                               deleteThis()
                               archive.hideCards()
                               if(cardArcive.contains(Card.this) && goalColumn.isEmpty) cardArcive = cardArcive.filter(_ != Card.this) //if card already is in the archive and is removed it will be removed from the board completely
@@ -461,7 +543,6 @@ object GUI extends JFXApp {
                         if(!this.parent.toString.contains(n.toString)) i = i:+n
                       }
                   }
-                  println(i)
                   i
               }
       }
