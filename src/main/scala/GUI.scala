@@ -28,7 +28,7 @@ object GUI extends JFXApp {
 
   var currentTitle = ""
   var currentBoard: Option[Board] = None
-  var currentMenuBoard: Option[VBox] = None
+  var currentMenuBoard: Option[boardDisplayBox] = None
   var columnList = Seq[Column]()
   var cardList = Seq[Card]()
   var cardArcive = Seq[Card]()
@@ -111,6 +111,7 @@ object GUI extends JFXApp {
         var lastEdited: String = ""
         var columns: Seq[Column] = Seq[Column]()
         var cards: Seq[Card] = Seq[Card]()
+        var menuBox = None
   }
 
   def createBoard(): Board = {
@@ -123,23 +124,22 @@ object GUI extends JFXApp {
   }
 
   def updateBoardMenu() = {
-    val nextBox = boardDisplayBox(boardList.last)
-    loadBoardMenu.children.add( nextBox )
+    val nextBox = new boardDisplayBox(boardList.last)
+    currentMenuBoard = Some(nextBox)
+    loadBoardMenu.children.add( nextBox.box )
     loadBoardMenu.children.filter(_.toString.contains(""))
     isnewboard = false
   }
 
 
 
-   def boardDisplayBox(b: Board) = new HBox {
-            val relatedBoard = b
-            val name = new Label(b.title){
+   class boardDisplayBox(b: Board) {
+        val relatedBoard = b
+        def updateTitle(s: String) = box.title.text = s
+        val box = new HBox {
+            val title = new Label("Untitled"){
               visible = true
-              font = new Font("Cabria", 15)
-            }
-            var ledit = new Label(b.lastEdited){
-              visible = true
-              font = new Font("Cabria", 15)
+              font = new Font("Cabria", 10)
             }
             var edit = new Button("Edit board") {
                 onAction = _ => {
@@ -151,14 +151,14 @@ object GUI extends JFXApp {
                 }
             }
 
-            children = Seq(name, edit)
+            children = Seq(edit, title)
             style = GUI.border
+        }
    }
 
    def resetBoard(): Unit = {
       var edited = currentBoard.get
       edited.title = currentTitle
-      edited.lastEdited = Calendar.getInstance().getTime.toString.dropRight(9) + Calendar.getInstance().getTime.toString.takeRight(4)
       edited.columns = Seq()
       if(columnList.nonEmpty) for(column <- columnList) edited.columns = edited.columns :+ column
       columnList = Seq()
@@ -232,8 +232,10 @@ object GUI extends JFXApp {
 
       val saveBoard = new Button("Save board") {
           onAction = _ => {
+              println(Calendar.getInstance().getTime.toString.dropRight(9) + Calendar.getInstance().getTime.toString.takeRight(4))
+              var title = (currentTitle + " - Last edited: "+ Calendar.getInstance().getTime.toString.dropRight(9) + Calendar.getInstance().getTime.toString.takeRight(4))
               columnList = columnList.filter(_.co != archive.co)      //removing the archive column from the columnlist to avoid dublicates
-              if(currentTitle.nonEmpty) boardList.find(_ == currentBoard.get).get.title = currentTitle
+              if(currentTitle.nonEmpty) currentMenuBoard.get.updateTitle(title)
               showMenu()
           }
       }
@@ -269,12 +271,12 @@ object GUI extends JFXApp {
       if(loadTitle != "") title.label.text = loadTitle
       if(isnewboard) children.add(column0.co)    //checking if we have a new board so we know if we should add the stock column
       else {
-        columnList = columnList.filter(_ != column0)  // if not remove it from the column list to avoid it being double saved
+        columnList = columnList.filter(_ != column0)   // if not remove it from the column list to avoid it being double saved
         newColumnButton.relocate(newColumnButton.layoutX.value + (columnList.length - 1) * (columnWidth + 20), newColumnButton.layoutY.value)  //moving along the column button to match the column amount
       }
 
   }
-//panelsPane(loadColumn: Seq[Column] = Seq(), loadCards: Seq[Card] = Seq()):
+
   def mainBoard() = {
 
         new JFXApp.PrimaryStage {
@@ -307,7 +309,7 @@ object GUI extends JFXApp {
   }
 
   val loadBoardMenu = new VBox {
-              prefWidth = 200
+              prefWidth = 400
               prefHeight = 100
 
               val title = new Label("Boards")
