@@ -159,7 +159,6 @@ object GUI extends JFXApp {
       var edited = currentBoard.get
       edited.title = currentTitle
       edited.lastEdited = Calendar.getInstance().getTime.toString.dropRight(9) + Calendar.getInstance().getTime.toString.takeRight(4)
-      currentBoard = None
       edited.columns = Seq()
       if(columnList.nonEmpty) for(column <- columnList) edited.columns = edited.columns :+ column
       columnList = Seq()
@@ -167,10 +166,11 @@ object GUI extends JFXApp {
       if(cardList.nonEmpty) for(card <- cardList) edited.cards = edited.cards :+ card
       cardList = Seq()
       currentBoard = None
+      currentTitle = ""
   }
 
   //scene main/starter components
-  def panelsPane(loadColumn: Seq[Column] = Seq(), loadCards: Seq[Card] = Seq()): Pane = new Pane() {
+  def panelsPane(loadColumn: Seq[Column] = Seq(), loadCards: Seq[Card] = Seq(), loadTitle: String = ""): Pane = new Pane() {
 
       maxWidth = windowWidth
       maxHeight = windowHeigth
@@ -232,12 +232,8 @@ object GUI extends JFXApp {
 
       val saveBoard = new Button("Save board") {
           onAction = _ => {
-              columnList = columnList.filter(_.co != archive.co)
-              println(boardList)
-              println(currentBoard)
-              println(currentTitle)
-              println(columnList)
-              println(cardList)
+              columnList = columnList.filter(_.co != archive.co)      //removing the archive column from the columnlist to avoid dublicates
+              if(currentTitle.nonEmpty) boardList.find(_ == currentBoard.get).get.title = currentTitle
               showMenu()
           }
       }
@@ -266,11 +262,16 @@ object GUI extends JFXApp {
       newColumnButton.relocate(columnWidth+20,columntopy)
       detectonCircle.relocate(0,0)
 
-      children = Seq(archive.co, title, cardTypeLabel, cardTypeSelector, cardColorLabel, cardColorSelector, taggFilterLabel, taggFilter, column0.co, newColumnButton, removeBox, saveBoard, detectonCircle)
+      children = Seq(archive.co, title, cardTypeLabel, cardTypeSelector, cardColorLabel, cardColorSelector, taggFilterLabel, taggFilter, newColumnButton, removeBox, saveBoard, detectonCircle)
 
       if(loadColumn.nonEmpty) loadColumn.foreach(c => children.add(c.co))
       if(loadCards.nonEmpty) loadCards.foreach(c => c.p.addCustomCard(c))
-      if(currentTitle != "") title.label.text = currentTitle
+      if(loadTitle != "") title.label.text = loadTitle
+      if(isnewboard) children.add(column0.co)    //checking if we have a new board so we know if we should add the stock column
+      else {
+        columnList = columnList.filter(_ != column0)  // if not remove it from the column list to avoid it being double saved
+        newColumnButton.relocate(newColumnButton.layoutX.value + (columnList.length - 1) * (columnWidth + 20), newColumnButton.layoutY.value)  //moving along the column button to match the column amount
+      }
 
   }
 //panelsPane(loadColumn: Seq[Column] = Seq(), loadCards: Seq[Card] = Seq()):
@@ -296,7 +297,7 @@ object GUI extends JFXApp {
                       }
                       else {
                         println("edit")
-                        panelsPane(columnList, cardList)
+                        panelsPane(columnList, cardList, currentTitle)
                       }
                     }
                 }
