@@ -89,7 +89,7 @@ object GUI extends JFXApp {
           style = columnStyle()
   }
   val archive = new Column() {                                                    //using a column as base to make drag and drop functions work
-          co.children.clear()                                                     //displays archived cards upon hower
+          //co.children.clear()                                                     //displays archived cards upon hower
           co.prefWidth = 80
           co.prefHeight = 20
 
@@ -115,6 +115,7 @@ object GUI extends JFXApp {
         var lastEdited: String = ""
         var columns: Seq[Column] = Seq[Column]()
         var cards: Seq[Card] = Seq[Card]()
+        var archivedCards: Seq[Card] = Seq[Card]()
         val menuBox = new boardDisplayBox(this)
   }
 
@@ -166,12 +167,15 @@ object GUI extends JFXApp {
    def resetBoard(): Unit = {
       var edited = currentBoard.get
       edited.title = currentTitle
-      edited.columns = Seq()
-      if(columnList.nonEmpty) for(column <- columnList) edited.columns = edited.columns :+ column
-      columnList = Seq()
+      edited.columns = Seq()                                                                             //reseting in case of null
+      if(columnList.nonEmpty) for(column <- columnList) edited.columns = edited.columns :+ column        //adding all new objects
+      columnList = Seq()                                                                                 //clearing active tracker
       edited.cards = Seq()
       if(cardList.nonEmpty) for(card <- cardList) edited.cards = edited.cards :+ card
       cardList = Seq()
+      edited.archivedCards = Seq()
+      if(cardArcive.nonEmpty) for(card <- cardArcive) edited.archivedCards = edited.archivedCards :+ card
+      cardArcive = Seq()
       currentBoard = None
       currentTitle = ""
   }
@@ -238,7 +242,6 @@ object GUI extends JFXApp {
 
       val saveBoard = new Button("Save board") {
           onAction = _ => {
-              println(Calendar.getInstance().getTime.toString.dropRight(9) + Calendar.getInstance().getTime.toString.takeRight(4))
               var title = (currentTitle + " - Last edit: "+ Calendar.getInstance().getTime.toString.dropRight(9) + Calendar.getInstance().getTime.toString.takeRight(4))
               columnList = columnList.filter(_.co != archive.co)      //removing the archive column from the columnlist to avoid dublicates
               if(currentBoard != null ) currentBoard.get.menuBox.updateTitle(title)
@@ -273,12 +276,13 @@ object GUI extends JFXApp {
       children = Seq(archive.co, title, cardTypeLabel, cardTypeSelector, cardColorLabel, cardColorSelector, taggFilterLabel, taggFilter, newColumnButton, removeBox, saveBoard, detectonCircle)
 
       // startup checks based on if the board is new or an edit
-      if(loadColumn.nonEmpty) loadColumn.foreach(c => children.add(c.co))              //adds all saved columns
-      if(loadCards.nonEmpty) loadCards.foreach(c => c.p.addCustomCard(c))              //adds all saved cards into the columns
-      if(loadTitle != "") title.label.text = loadTitle                                 //adds the title if such was saved
-      if(isnewboard) children.add(column0.co)                                          //checking if we have a new board so we know if we should add the stock column
+      if(loadColumn.nonEmpty) loadColumn.foreach(c => children.add(c.co))                                                                        //adds all saved columns
+      if(loadCards.nonEmpty) loadCards.foreach(c => c.p.addCustomCard(c))                                                                        //adds all saved cards into the columns
+      if(currentBoard.get.archivedCards.nonEmpty) currentBoard.get.archivedCards.foreach(c => cardArcive = cardArcive :+ c)                      //updating archive
+      if(loadTitle != "") title.label.text = loadTitle                                                                                           //adds the title if such was saved
+      if(isnewboard) children.add(column0.co)                                                                                                    //checking if we have a new board so we know if we should add the stock column
       else {
-          columnList = columnList.filter(_ != column0)                                   // if not remove it from the column list to avoid it being double saved
+          columnList = columnList.filter(_ != column0)                                                                                           // if not remove it from the column list to avoid it being double saved
           newColumnButton.relocate(newColumnButton.layoutX.value + (columnList.length - 1) * (columnWidth + 20), newColumnButton.layoutY.value)  //moving along the column button to match the column amount
       }
 
