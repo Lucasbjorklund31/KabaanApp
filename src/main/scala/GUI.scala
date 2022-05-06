@@ -147,6 +147,7 @@ object GUI extends JFXApp {
                   columnList = b.columns
                   cardList = b.cards
                   currentTitle = b.title
+                  currentMenuBoard = Some(boardDisplayBox.this)
                   showBoard()
                 }
             }
