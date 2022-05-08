@@ -28,7 +28,6 @@ object GUI extends JFXApp {
   //background variables
   var boardList = Seq[Board]()
   var currentBoard: Option[Board] = None
-  var currentMenuBoard: Option[boardDisplayBox] = None
   var currentTitle = ""
   var columnList = Seq[Column]()
   var cardList = Seq[Card]()
@@ -170,7 +169,6 @@ object GUI extends JFXApp {
 
   def updateBoardMenu() = {
     val nextBox = currentBoard.get.menuBox
-    //currentMenuBoard = Some(nextBox)
     loadBoardMenu.children.add( nextBox.box )
     loadBoardMenu.children.filter(_.toString.contains(""))
     isnewboard = false
@@ -375,7 +373,7 @@ object GUI extends JFXApp {
 
     //card options
   def cardType(): Node = cardTypeSelector.value.value match {
-     case "field"    => newTextField("textfield")
+     case "field"    => newTextField("Card text")
      case "area"     => newTextarea()
      case "checkbox" => newCheckBox()
      case "slider"   => newSlider()
@@ -398,9 +396,12 @@ object GUI extends JFXApp {
           promptText = "textarea"
   }
 
-  def newSlider(): Node = new Slider() {
-          prefWidth = columnWidth - 10
+  def newSlider(): Node = new VBox {
+          val text = newTextField("Slider text")
+          val slider = new Slider() {
           prefHeight = 20
+          }
+          children = Seq(text, slider)
   }
 
   def newCheckBox() = {
