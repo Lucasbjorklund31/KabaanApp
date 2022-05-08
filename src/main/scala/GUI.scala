@@ -41,10 +41,8 @@ object GUI extends JFXApp {
 
 
   //drop down options for cards
-  var cardTypes = Seq("field", "area", "checkbox", "slider")
-  var typeChanged = false
+  var cardTypes = Seq("Field", "Area", "Checkbox", "Slider")
   var cardColors = Seq("White", "Black", "LightGray", "LightBlue", "LightGreen", "LightYellow", "Red", "Cyan", "Pink", "Purple", "Brown", "Violet")
-  var colorChanged = false
 
   //column and card visuals
   val border = { //stock borders
@@ -72,11 +70,14 @@ object GUI extends JFXApp {
         mouseTransparent = true
         visible = false
   }
-  val cardTypeSelector = new ComboBox(cardTypes)                                //changes the type of new cards
-      cardTypeSelector.onAction = (e: Any) => typeChanged = true
+  val cardTypeSelector = new ComboBox(cardTypes) {                              //changes the type of new cards
+     value = "Field"
+  }
 
-  val cardColorSelector = new ComboBox(cardColors)                              //changes the color of new cards
-     // cardColorSelector.onAction = (e: Any) =>
+
+  val cardColorSelector = new ComboBox(cardColors) {                             //changes the color of new cards
+    value = "White"
+  }
 
   val removeBox = new VBox {                                                    //box which adds cards to the archive or completely removes them ón drag drop
           visible = false
@@ -107,35 +108,25 @@ object GUI extends JFXApp {
 
 
 
-    //board classes
+    //board class
   class Board {
         var title: String = ""
         var lastEdited: String = ""
         var columns: Seq[Column] = Seq[Column]()
         var cards: Seq[Card] = Seq[Card]()
         var archivedCards: Seq[Card] = Seq[Card]()
-        val menuBox = new boardDisplayBox(this)
-
-  }
-
-  class boardDisplayBox(b: Board) {
-        val relatedBoard = b
-        //def updateTitle(s: String) = box.title.text = s
-        //def deleteThis() = {
-        //  boardList = boardList.filter(_ == b)
-        //  loadBoardMenu.children.remove(this.box)
-        //}
-        val box = new HBox {
+        //val menuBox = new boardDisplayBox(this)
+        val menuBox = new HBox {
             val title = new Label("Untitled"){
               visible = true
               font = new Font("Cabria", 11)
             }
             var edit = new Button("Edit") {
                 onAction = _ => {
-                  currentBoard = Some(b)
-                  columnList = b.columns
-                  cardList = b.cards
-                  currentTitle = b.title
+                  currentBoard = Some(Board.this)
+                  columnList = Board.this.columns
+                  cardList = Board.this.cards
+                  currentTitle = Board.this.title
                   showBoard()
                 }
             }
@@ -150,12 +141,11 @@ object GUI extends JFXApp {
 
             def updateTitle(s: String) = this.title.text = s
             def deleteThis() = {
-              boardList = boardList.filter(_ == b)
+              boardList = boardList.filter(_ == Board.this)
               loadBoardMenu.children.remove(this)
             }
         }
   }
-
 
   //board functions
   def createBoard(): Board = {
@@ -169,7 +159,7 @@ object GUI extends JFXApp {
 
   def updateBoardMenu() = {
     val nextBox = currentBoard.get.menuBox
-    loadBoardMenu.children.add( nextBox.box )
+    loadBoardMenu.children.add( nextBox )
     loadBoardMenu.children.filter(_.toString.contains(""))
     isnewboard = false
   }
@@ -189,6 +179,8 @@ object GUI extends JFXApp {
       cardArcive = Seq()
       currentBoard = None
       currentTitle = ""
+      cardTypeSelector.value = "Field"
+      cardColorSelector.value = "White"
   }
 
   //scene main/starter components
@@ -253,7 +245,7 @@ object GUI extends JFXApp {
       val saveBoard = new Button("Save board") {
           onAction = _ => {
               columnList = columnList.filter(_.co != archive.co)          //removing the archive column from the columnlist to avoid dublicates
-              if(currentBoard != null ) currentBoard.get.menuBox.box.updateTitle((" " + currentTitle + " - Last edit: "+ Calendar.getInstance().getTime.toString.dropRight(9) + Calendar.getInstance().getTime.toString.takeRight(4)))
+              if(currentBoard != null ) currentBoard.get.menuBox.updateTitle((" " + currentTitle + " - Last edit: "+ Calendar.getInstance().getTime.toString.dropRight(9) + Calendar.getInstance().getTime.toString.takeRight(4)))
               showMenu()
           }
       }
@@ -279,7 +271,7 @@ object GUI extends JFXApp {
       saveBoard.relocate(600, 10)
 
       column0.co.relocate(0, columntopy)                   //columns
-      newColumnButton.relocate(columnWidth+20,columntopy)
+      newColumnButton.relocate(columnWidth+20, columntopy)
 
       children = Seq(archive.co, title, cardTypeLabel, cardTypeSelector, cardColorLabel, cardColorSelector, taggFilterLabel, taggFilter, newColumnButton, removeBox, saveBoard, detectonCircle)
 
@@ -373,10 +365,10 @@ object GUI extends JFXApp {
 
     //card options
   def cardType(): Node = cardTypeSelector.value.value match {
-     case "field"    => newTextField("Card text")
-     case "area"     => newTextarea()
-     case "checkbox" => newCheckBox()
-     case "slider"   => newSlider()
+     case "Field"    => newTextField("Card text")
+     case "Area"     => newTextarea()
+     case "Checkbox" => newCheckBox()
+     case "Slider"   => newSlider()
   }
 
   def  cardColor() = cardColorSelector.value.value
@@ -476,10 +468,7 @@ object GUI extends JFXApp {
       //column functions
       def relocate(x: Double, y: Double) = co.relocate(x,y)           //relocates the column into a new position
       def addCard(): Unit = {                                         //adds a new card of the set type to the card
-          val next = {
-            if(typeChanged) new Card(this, cardType())
-            else new Card(this)
-          }
+          val next = new Card(this, cardType())
           if(cardList == null) cardList = Seq()
           cardList = cardList :+ next                                 //and adds it to the column and global lists
           co.children.add(next.ca)
