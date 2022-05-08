@@ -1,11 +1,14 @@
+import javafx.beans.property.ObjectProperty
 import javafx.event.EventHandler
 import javafx.scene.input
+import javafx.scene.input.KeyEvent
 import scalafx.Includes._
 import scalafx.application.JFXApp
 import scalafx.scene.{Node, Scene}
 import scalafx.scene.control._
 import scalafx.scene.control.{Button, CheckBox, ProgressBar, TextField}
-import scalafx.scene.input.MouseEvent
+import scalafx.scene.input.KeyCode.Enter
+import scalafx.scene.input.{KeyCode, MouseEvent}
 import scalafx.scene.layout._
 import scalafx.scene.shape.Circle
 import scalafx.scene.text.Font
@@ -16,9 +19,9 @@ object GUI extends JFXApp {
 
   //Editgables
 
-  val windowWidth = 800
-  val windowHeigth = 600
-  var columnWidth = 150
+  val windowWidth =  1000  //800
+  val windowHeigth = 800  //600
+  var columnWidth = 150   //150
   var columnBackgroundColor = "white"
 
   // var backgroundColor = "white"
@@ -41,7 +44,7 @@ object GUI extends JFXApp {
 
 
   //drop down options for cards
-  var cardTypes = Seq("Field", "Area", "Checkbox", "Slider")
+  var cardTypes = Seq("Field", "Slider", "Checkbox") //"Area"
   var cardColors = Seq("White", "Black", "LightGray", "LightBlue", "LightGreen", "LightYellow", "Red", "Cyan", "Pink", "Purple", "Brown", "Violet")
 
   //column and card visuals
@@ -256,14 +259,27 @@ object GUI extends JFXApp {
 
       //columns and card functions
       val column0 = new Column()
-      var newColumnButton = new Button("Add column") {
+      val newColumnButton = new Button("Add column") {
           onAction = _ => {
               val newColumn = new Column()
               children += newColumn.co
               newColumn.relocate(this.layoutX.value, this.layoutY.value)
               this.relocate(this.layoutX.value + columnWidth + 20, this.layoutY.value)
+              //removeColumnButton.relocate(removeColumnButton.layoutX.value + (columnWidth + 20), removeColumnButton.layoutY.value)
           }
       }
+    /*
+      var removeColumnButton: Node = new Button("Add column") {
+          onAction = _ => {
+              println(columnList.filter(c => c != column0 || c != archive))
+              if(columnList.count(c => c != column0 || c != archive) > 1) {
+              deleteColumn()
+              newColumnButton.relocate(newColumnButton.layoutX.value - (columnWidth + 20), newColumnButton.layoutY.value)
+              this.relocate(this.layoutX.value - (columnWidth + 20), this.layoutY.value)
+              }
+          }
+      }
+     */
 
       val saveBoard = new Button("Save board") {
           onAction = _ => {
@@ -294,8 +310,9 @@ object GUI extends JFXApp {
       archive.relocate(600, 15)
       saveBoard.relocate(700, 20)
 
-      column0.co.relocate(0, columntopy)                    //columns
-      newColumnButton.relocate(columnWidth+20, columntopy)
+      column0.co.relocate(5, columntopy)                    //columns
+      newColumnButton.relocate(columnWidth+25, columntopy)
+      //removeColumnButton.relocate(columnWidth+20, columntopy + 40)
 
       children = Seq(archive.co, title, cardTypeLabel, cardTypeSelector, cardColorLabel, cardColorSelector, taggFilterLabel, taggFilter, newColumnButton, removeBox, deleteBox, saveBoard, detectonCircle)
 
@@ -308,7 +325,15 @@ object GUI extends JFXApp {
       else {
           columnList = columnList.filter(_ != column0).filter(_ != archive)                                                                       // if not remove it from the column list to avoid it being double saved
           newColumnButton.relocate(newColumnButton.layoutX.value + (columnList.length - 1) * (columnWidth + 20), newColumnButton.layoutY.value)  //moving along the column button to match the column amount
+          //removeColumnButton.relocate(removeColumnButton.layoutX.value + (columnList.length - 1) * (columnWidth + 20), removeColumnButton.layoutY.value)
       }
+
+    def deleteColumn() = {
+        val removed = columnList.last
+        removed.deleteCards()
+        columnList = columnList.filter(_ == removed)
+        children.remove(removed.co)
+    }
 
   }
 
@@ -354,7 +379,7 @@ object GUI extends JFXApp {
                   createBoard()                                                    //creates and shows a new board
               }
           }
-          val loadPreset = new Button("load preset1"){
+          val loadPreset = new Button("load preset"){
               onAction = _ => {
                  loadpreset1()
               }
@@ -377,7 +402,7 @@ object GUI extends JFXApp {
 
                   onMouseMoved = (me: MouseEvent) => if(currentBoard.isDefined) resetBoard()
 
-                  loadBoardMenu.relocate(0, 0)
+                  loadBoardMenu.relocate(10, 10)
                   children = loadBoardMenu
               }
 
@@ -445,10 +470,6 @@ object GUI extends JFXApp {
 
           def addTask(s: String) = {
               val t = new CheckBox(s) {
-                onAction = _ => {
-                  progressBar.progress = tasks.count(_.isSelected) / tasks.length.toDouble
-                  println(progressBar.progress)
-                }
               }
               children.add(t)
               tasks = tasks :+ t
@@ -456,24 +477,20 @@ object GUI extends JFXApp {
           val cardTitle = new TextField() {
               promptText = "main task"
           }
-          val progressBar = new ProgressBar {
-              prefWidth = columnWidth
-              prefHeight = 50
-              progress = 50
-              visible = true
-          }
-          val addTaskButton = new Button("Add task") {
-              onAction = _ => {
-                  addTask(taskName.text.value)
-                  taskName.text = ""
-                  progressBar.progress = tasks.count(_.isSelected) / tasks.length.toDouble
-                  println(progressBar.progress)
-              }
-          }
           val taskName = new TextField() {
              promptText = "sub task"
+
+            onKeyReleased = (key: KeyEvent) => {
+              key.code match {
+                case KeyCode.Enter => {
+                  addTask(text.value)
+                  text = ""
+                }
+                case _ =>
+              }
+            }
           }
-          children = Seq(cardTitle, progressBar, addTaskButton)
+          children = Seq(cardTitle)
 
           onMouseEntered = (me: MouseEvent) => {
               if(!children.contains(taskName)) children.add(taskName)
@@ -488,9 +505,8 @@ object GUI extends JFXApp {
     //card options
   def cardType(): Node = cardTypeSelector.value.value match {
      case "Field"    => val c = newTextField(); c.promptText = "cardtext"; c
-     case "Area"     => newTextarea()
-     case "Checkbox" => newCheckBox()
      case "Slider"   => newSlider()
+     case "Checkbox" => newCheckBox()
   }
 
   def  cardColor() = cardColorSelector.value.value
@@ -537,6 +553,9 @@ object GUI extends JFXApp {
           if(co.children.map(_.getId).contains(n.getId)) {
             co.getChildren.remove(n)
           }
+      }
+      def deleteCards() = {
+        co.children.forEach(c => removeCard(c))
       }
 
   }
