@@ -4,6 +4,7 @@ import scalafx.Includes._
 import scalafx.application.JFXApp
 import scalafx.scene.{Node, Scene}
 import scalafx.scene.control._
+import scalafx.scene.control.{Button, CheckBox, ProgressBar, TextField}
 import scalafx.scene.input.MouseEvent
 import scalafx.scene.layout._
 import scalafx.scene.shape.Circle
@@ -35,7 +36,6 @@ object GUI extends JFXApp {
 
   var dragActive = false
   var isnewboard = false
-  var xmax = columnWidth + 20
   val columntopy = 50
 
 
@@ -77,7 +77,7 @@ object GUI extends JFXApp {
       cardTypeSelector.onAction = (e: Any) => typeChanged = true
 
   val cardColorSelector = new ComboBox(cardColors)                              //changes the color of new cards
-      cardColorSelector.onAction = (e: Any) => println(cardTypeSelector)
+     // cardColorSelector.onAction = (e: Any) =>
 
   val removeBox = new VBox {                                                    //box which adds cards to the archive or completely removes them ón drag drop
           visible = false
@@ -88,20 +88,19 @@ object GUI extends JFXApp {
           children = Seq(title)
           style = columnStyle()
   }
-  val archive = new Column() {                                                    //using a column as base to make drag and drop functions work
-          //co.children.clear()                                                     //displays archived cards upon hower
+  val archive = new Column() {                                                   //using a column as base to make drag and drop functions work
           co.prefWidth = 80
           co.prefHeight = 20
 
           val title = new Label("Archive")
-          co.onMouseEntered = (me: MouseEvent) => {
+          co.onMouseEntered = (me: MouseEvent) => {                              //displays archived cards upon hower
               cardArcive.foreach(a => this.addCustomCard(a))
           }
 
           co.children = Seq(title)
           co.style = columnStyle()
 
-          def hideCards() = { //hides the cards the archive while the archive is not interacted with
+          def hideCards() = {                                                     //hides the cards the archive while the archive is not interacted with
               co.children.clear()
               co.children.add(title)
           }
@@ -117,29 +116,44 @@ object GUI extends JFXApp {
         var cards: Seq[Card] = Seq[Card]()
         var archivedCards: Seq[Card] = Seq[Card]()
         val menuBox = new boardDisplayBox(this)
+
   }
 
   class boardDisplayBox(b: Board) {
         val relatedBoard = b
-        def updateTitle(s: String) = box.title.text = s
+        //def updateTitle(s: String) = box.title.text = s
+        //def deleteThis() = {
+        //  boardList = boardList.filter(_ == b)
+        //  loadBoardMenu.children.remove(this.box)
+        //}
         val box = new HBox {
             val title = new Label("Untitled"){
               visible = true
-              font = new Font("Cabria", 10)
+              font = new Font("Cabria", 11)
             }
-            var edit = new Button("Edit board") {
+            var edit = new Button("Edit") {
                 onAction = _ => {
                   currentBoard = Some(b)
                   columnList = b.columns
                   cardList = b.cards
                   currentTitle = b.title
-                  //currentMenuBoard = b.menuBox
                   showBoard()
                 }
             }
+            var remove = new Button("Remove") {
+                onAction = _ => {
+                  deleteThis()
+                }
+            }
 
-            children = Seq(edit, title)
+            children = Seq(edit, remove, title)
             style = GUI.border
+
+            def updateTitle(s: String) = this.title.text = s
+            def deleteThis() = {
+              boardList = boardList.filter(_ == b)
+              loadBoardMenu.children.remove(this)
+            }
         }
   }
 
@@ -147,7 +161,6 @@ object GUI extends JFXApp {
   //board functions
   def createBoard(): Board = {
             val next = new Board()
-            println(next.menuBox)
             isnewboard = true
             currentBoard = Some(next)
             boardList = boardList :+ next
@@ -236,20 +249,18 @@ object GUI extends JFXApp {
               children += newColumn.co
               newColumn.relocate(this.layoutX.value, this.layoutY.value)
               this.relocate(this.layoutX.value + columnWidth + 20, this.layoutY.value)
-              xmax += columnWidth + 20
           }
       }
 
       val saveBoard = new Button("Save board") {
           onAction = _ => {
-              var title = (currentTitle + " - Last edit: "+ Calendar.getInstance().getTime.toString.dropRight(9) + Calendar.getInstance().getTime.toString.takeRight(4))
-              columnList = columnList.filter(_.co != archive.co)      //removing the archive column from the columnlist to avoid dublicates
-              if(currentBoard != null ) currentBoard.get.menuBox.updateTitle(title)
+              columnList = columnList.filter(_.co != archive.co)          //removing the archive column from the columnlist to avoid dublicates
+              if(currentBoard != null ) currentBoard.get.menuBox.box.updateTitle((" " + currentTitle + " - Last edit: "+ Calendar.getInstance().getTime.toString.dropRight(9) + Calendar.getInstance().getTime.toString.takeRight(4)))
               showMenu()
           }
       }
 
-      onMouseMoved = (me: MouseEvent) => { //making the archive hide if not howered and making sure the boardmenu stays up to date
+      onMouseMoved = (me: MouseEvent) => {          //making the archive hide if not howered and making sure the boardmenu stays up to date
         if(dragActive || !archive.co.hover.value) {
         archive.hideCards()
         archive.co.toFront()
@@ -258,7 +269,7 @@ object GUI extends JFXApp {
       }
 
       //node positions
-      title.relocate(5,10)
+      title.relocate(5,10)                                 //top panel
       cardTypeLabel.relocate(150,0)
       cardTypeSelector.relocate(150, 20)
       cardColorLabel.relocate(250,0)
@@ -269,9 +280,8 @@ object GUI extends JFXApp {
       archive.relocate(500, 15)
       saveBoard.relocate(600, 10)
 
-      column0.co.relocate(0, columntopy)
+      column0.co.relocate(0, columntopy)                   //columns
       newColumnButton.relocate(columnWidth+20,columntopy)
-      detectonCircle.relocate(0,0)
 
       children = Seq(archive.co, title, cardTypeLabel, cardTypeSelector, cardColorLabel, cardColorSelector, taggFilterLabel, taggFilter, newColumnButton, removeBox, saveBoard, detectonCircle)
 
@@ -295,18 +305,18 @@ object GUI extends JFXApp {
             scene = new Scene(windowWidth,windowHeigth) {
 
                 onMouseDragged = (me: MouseEvent) => {
-                    dragActive = true
+                    dragActive = true                                                                                 //drag and drop initiator
                 }
                 onMouseMoved = (me: MouseEvent) => {
-                   detectonCircle.relocate(me.x-detectonCircle.radius.value/2, me.y-detectonCircle.radius.value/2)
+                   detectonCircle.relocate(me.x-detectonCircle.radius.value/2, me.y-detectonCircle.radius.value/2)    //drag and drop helper
                 }
 
                 root = new BorderPane() {
                     top = {
-                        if(isnewboard) {
+                        if(isnewboard) {                                                                              //if its a new board => load a blank board
                           panelsPane()
                         }
-                        else {
+                        else {                                                                                        //else load it with data
                           panelsPane(columnList, cardList, currentTitle)
                         }
                     }
@@ -316,15 +326,16 @@ object GUI extends JFXApp {
        }
   }
 
+
   val loadBoardMenu = new VBox {
-      prefWidth = 400
-      prefHeight = 100
+      prefWidth = 500
+      prefHeight = 50
 
       val title = new Label("Boards")
 
       val createBoardButton = new Button("create board"){
           onAction = _ => {
-              createBoard()
+              createBoard()                                                    //creates and shows a new board
           }
       }
       style = GUI.border
@@ -351,7 +362,7 @@ object GUI extends JFXApp {
   }
 
 
-  stage = boardSelection() //selecting what to show in the GUI
+  stage = boardSelection()                        //selecting what to show in the GUI
   def showBoard() = stage = mainBoard()
   def showMenu() = stage = boardSelection()
 
@@ -364,10 +375,10 @@ object GUI extends JFXApp {
 
     //card options
   def cardType(): Node = cardTypeSelector.value.value match {
-     case "field" => newTextField("textfield")
-     case "area" => newTextarea()
+     case "field"    => newTextField("textfield")
+     case "area"     => newTextarea()
      case "checkbox" => newCheckBox()
-     case "slider" => newSlider()
+     case "slider"   => newSlider()
   }
 
   def  cardColor() = cardColorSelector.value.value
@@ -397,24 +408,36 @@ object GUI extends JFXApp {
           var tasks = Seq[CheckBox]()
 
           def addTask(s: String) = {
-              val t = new CheckBox(s)
+              val t = new CheckBox(s) {
+                onAction = _ => {
+                  progressBar.progress = tasks.count(_.isSelected) / tasks.length.toDouble
+                  println(progressBar.progress)
+                }
+              }
               children.add(t)
               tasks = tasks :+ t
           }
-
-          var cardTitle = new TextField() {
+          val cardTitle = new TextField() {
               promptText = "main task"
+          }
+          val progressBar = new ProgressBar {
+              prefWidth = columnWidth
+              prefHeight = 50
+              progress = 50
+              visible = true
           }
           val addTaskButton = new Button("Add task") {
               onAction = _ => {
                   addTask(taskName.text.value)
                   taskName.text = ""
+                  progressBar.progress = tasks.count(_.isSelected) / tasks.length.toDouble
+                  println(progressBar.progress)
               }
           }
           val taskName = new TextField() {
              promptText = "sub task"
           }
-          children = Seq(cardTitle, addTaskButton)
+          children = Seq(cardTitle, progressBar, addTaskButton)
 
           onMouseEntered = (me: MouseEvent) => {
               if(!children.contains(taskName)) children.add(taskName)
@@ -447,24 +470,24 @@ object GUI extends JFXApp {
           style = columnStyle()
       }
 
-      if(cards.nonEmpty) cards.foreach(this.addCustomCard(_)) //helper for creating board
+      if(cards.nonEmpty) cards.foreach(this.addCustomCard(_))         //helper for creating board
 
       //column functions
-      def relocate(x: Double, y: Double) = co.relocate(x,y)
-      def addCard(): Unit = {
+      def relocate(x: Double, y: Double) = co.relocate(x,y)           //relocates the column into a new position
+      def addCard(): Unit = {                                         //adds a new card of the set type to the card
           val next = {
             if(typeChanged) new Card(this, cardType())
             else new Card(this)
           }
           if(cardList == null) cardList = Seq()
-          cardList = cardList :+ next
+          cardList = cardList :+ next                                 //and adds it to the column and global lists
           co.children.add(next.ca)
       }
-      def addCustomCard(card: Card): Unit = {
+      def addCustomCard(card: Card): Unit = {                         //adds a already existing card to the column
           if(!co.children.contains(card.ca)) co.children.add(card.ca)
           card.p = this
       }
-      def removeCard(n: Node): Unit = {
+      def removeCard(n: Node): Unit = {                                //removes the card from the column
           var removed = n
           if(co.children.map(_.getId).contains(n.getId)) {
             co.getChildren.remove(n)
@@ -478,7 +501,6 @@ object GUI extends JFXApp {
 
       var p: Column = parent
       var cardTagg = ""
-      var checkBoxes = Seq[VBox]()
 
       var ca: VBox = new VBox(6) {
           prefWidth = columnWidth
@@ -512,7 +534,7 @@ object GUI extends JFXApp {
               me: MouseEvent =>
                   if(!dragActive)  {
                       me.eventType match {
-                          case MouseEvent.MousePressed =>
+                          case MouseEvent.MousePressed =>                                                                                 //sets a save state of the node origin
                               nodeX = this.translateX() - me.sceneX
                               nodeY = this.translateY() - me.sceneY
                           case _ =>
@@ -521,40 +543,38 @@ object GUI extends JFXApp {
                   else if (dragActive) {
                       me.eventType match {
                           case MouseEvent.MouseDragged =>
-                              this.parent.get().toFront()
-                              detectonCircle.relocate(me.sceneX-detectonCircle.radius.value/2, me.sceneY-detectonCircle.radius.value/2)
-                              dragActive = true
-                              this.translateX = nodeX + me.sceneX
+                              this.parent.get().toFront()                                                                                 //move card and respective column to front to be visible
+                              detectonCircle.relocate(me.sceneX-detectonCircle.radius.value/2, me.sceneY-detectonCircle.radius.value/2)   //intersection checker moved along
+                              this.translateX = nodeX + me.sceneX                                                                         //start moving around the card
                               this.translateY = nodeY + me.sceneY
-                              removeBox.visible = true
+                              removeBox.visible = true                                                                                    //makes the removebox visible to allow deleting of cards
 
                           case MouseEvent.MouseReleased =>
-                              if(checkOverlapp().nonEmpty && dragActive){
-                                  var goalColumn = columnList.find(a => a.co.toString.contains(checkOverlapp().head.toString))
-                                  deleteThis()
-                                  archive.hideCards()
+                              if(checkOverlapp().nonEmpty && dragActive){                                                                 //if a dragged card is dropped into an other column
+                                  var goalColumn = columnList.find(a => a.co.toString.contains(checkOverlapp().head.toString))            //find goal column in question
+                                  deleteThis()                                                                                            //remove card from the old parent column
                                   if(cardArcive.contains(Card.this) && goalColumn.isEmpty) cardArcive = cardArcive.filter(_ != Card.this) //if card already is in the archive and is removed it will be removed from the board completely
                                   else {
                                       cardArcive = cardArcive.filter(_ != Card.this)                                                      //removes card from archive so it can be added to its new parent
                                       if(goalColumn.isEmpty) cardArcive = cardArcive :+ Card.this                                         //if the parent is empty aka the remove box => add to archive
                                       else goalColumn.get.addCustomCard(Card.this)                                                        //else add to the new column
                                   }
-                                  this.undoDrag()
                               }
-                              else undoDrag()
-                              dragActive = false
-                              removeBox.visible = false
+                              undoDrag()                                                                                                   //move the card back to its correct place in the old/new column
+                              dragActive = false                                                                                           //mouse released => drag not active
+                              archive.hideCards()                                                                                          //hide archive in the case that we had interacted with it
+                              removeBox.visible = false                                                                                    //hide the remove box
                           case _ =>
                       }
-                      me.consume()
+                      me.consume()                                                                                                          //reset mouse state
                   }
                   //drag amd drop overlapp checker
                   def checkOverlapp(): Seq[Node] = {
-                      var i: Seq[Node] = Seq()
-                      var columns = detectonCircle.parent.get().getChildrenUnmodifiable.filter(_.getClass.toString.contains("VBox"))
+                      var i: Seq[Node] = Seq()                                                                                              //overlap holder
+                      var columns = detectonCircle.parent.get().getChildrenUnmodifiable.filter(_.getClass.toString.contains("VBox"))        //search only for vboxes aka column
                       for(n <- columns) { //check intersections
-                          if(n.boundsInParent.value.intersects(detectonCircle.boundsInParent.value)){
-                            if(!this.parent.toString.contains(n.toString)) i = i :+ n
+                          if(n.boundsInParent.value.intersects(detectonCircle.boundsInParent.value)){                                       //check if the column in question intersects mouse
+                            if(!this.parent.toString.contains(n.toString)) i = i :+ n                                                       //as the original column still is linked we filter it out before returning a potentially new column
                           }
                       }
                       i

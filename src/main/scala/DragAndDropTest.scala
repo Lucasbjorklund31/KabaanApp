@@ -3,7 +3,7 @@
 import scalafx.Includes._
 import scalafx.application.JFXApp
 import scalafx.geometry.Insets
-import scalafx.scene.control.{Button, CheckBox, TextField}
+import scalafx.scene.control.{Button, CheckBox, ProgressBar, TextField}
 import scalafx.scene.input.{MouseDragEvent, MouseEvent}
 import scalafx.scene.layout.{BorderPane, Pane, VBox}
 import scalafx.scene.shape.Circle
@@ -39,12 +39,20 @@ object DragAndDropTest extends JFXApp{
       maxWidth = 800
       maxHeight = 500
 
+      val progressBar = new ProgressBar {
+        maxWidth = 300
+        maxHeight = 10
+        visible = true
+        progress = 0.60
+      }
+
       val switch = new Button("switch") {
         onAction = _ => stage = stage2()
       }
       switch.relocate(100, 100)
+      progressBar.relocate(250, 250)
 
-      children = Seq(switch)
+      children = Seq(switch, progressBar)
   }
 
   def stage2(): JFXApp.PrimaryStage = new JFXApp.PrimaryStage {
