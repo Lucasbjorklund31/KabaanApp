@@ -83,10 +83,29 @@ object GUI extends JFXApp {
           visible = false
           prefWidth = 100
           prefHeight = 45
+          val title = new Label("Archive Card")
+
+          children = Seq(title)
+          style = columnStyle()
+  }
+  val deleteBox = new VBox {                                                      //box which completely removes them ón drag drop from the archive
+          visible = false
+          prefWidth = 100
+          prefHeight = 45
           val title = new Label("Delete Card")
 
           children = Seq(title)
           style = columnStyle()
+  }
+  def hideBoxes() = {
+    removeBox.visible = false
+    deleteBox.visible = false
+  }
+  def showBoxes() = {
+    removeBox.visible = true
+    removeBox.toFront()
+    deleteBox.visible = true
+    deleteBox.toFront()
   }
   val archive = new Column() {                                                   //using a column as base to make drag and drop functions work
           co.prefWidth = 80
@@ -194,7 +213,7 @@ object GUI extends JFXApp {
       maxHeight = windowHeigth
 
       val title = new HBox() {
-          prefWidth = 150
+          prefWidth = 250
           prefHeight = 30
           val label = new Label("Title")
           var input = new TextField(){
@@ -263,21 +282,22 @@ object GUI extends JFXApp {
       }
 
       //node positions
-      title.relocate(5,10)                                 //top panel
-      cardTypeLabel.relocate(150,0)
-      cardTypeSelector.relocate(150, 20)
-      cardColorLabel.relocate(250,0)
-      cardColorSelector.relocate(250,20)
-      taggFilterLabel.relocate(380,0)
-      taggFilter.relocate(380,20)
-      removeBox.relocate(380, 0)
-      archive.relocate(500, 15)
-      saveBoard.relocate(600, 10)
+      title.relocate(5,10)                                   //top panel
+      cardTypeLabel.relocate(250,0)
+      cardTypeSelector.relocate(250, 20)
+      cardColorLabel.relocate(350,0)
+      cardColorSelector.relocate(350,20)
+      taggFilterLabel.relocate(480,0)
+      taggFilter.relocate(480,20)
+      removeBox.relocate(140, 0) //480
+      deleteBox.relocate(700, 0)
+      archive.relocate(600, 15)
+      saveBoard.relocate(700, 20)
 
-      column0.co.relocate(0, columntopy)                   //columns
+      column0.co.relocate(0, columntopy)                    //columns
       newColumnButton.relocate(columnWidth+20, columntopy)
 
-      children = Seq(archive.co, title, cardTypeLabel, cardTypeSelector, cardColorLabel, cardColorSelector, taggFilterLabel, taggFilter, newColumnButton, removeBox, saveBoard, detectonCircle)
+      children = Seq(archive.co, title, cardTypeLabel, cardTypeSelector, cardColorLabel, cardColorSelector, taggFilterLabel, taggFilter, newColumnButton, removeBox, deleteBox, saveBoard, detectonCircle)
 
       // startup checks based on if the board is new or an edit
       if(loadColumn.nonEmpty) loadColumn.foreach(c => if(!children.contains(c.co))children.add(c.co))                                                                        //adds all saved columns
@@ -572,7 +592,7 @@ object GUI extends JFXApp {
                               detectonCircle.relocate(me.sceneX-detectonCircle.radius.value/2, me.sceneY-detectonCircle.radius.value/2)   //intersection checker moved along
                               this.translateX = nodeX + me.sceneX                                                                         //start moving around the card
                               this.translateY = nodeY + me.sceneY
-                              removeBox.visible = true                                                                                    //makes the removebox visible to allow deleting of cards
+                              showBoxes()                                                                                                 //makes the removebox/deletebox visible to allow deleting of cards
 
                           case MouseEvent.MouseReleased =>
                               if(checkOverlapp().nonEmpty && dragActive){                                                                 //if a dragged card is dropped into an other column
@@ -588,7 +608,7 @@ object GUI extends JFXApp {
                               undoDrag()                                                                                                   //move the card back to its correct place in the old/new column
                               dragActive = false                                                                                           //mouse released => drag not active
                               archive.hideCards()                                                                                          //hide archive in the case that we had interacted with it
-                              removeBox.visible = false                                                                                    //hide the remove box
+                              hideBoxes()                                                                                                  //hide the remove and delete box
                           case _ =>
                       }
                       me.consume()                                                                                                          //reset mouse state
