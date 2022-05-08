@@ -26,6 +26,7 @@ object GUI extends JFXApp {
 
   //Stock
   //background variables
+  val columntopy = 50
   var boardList = Seq[Board]()
   var currentBoard: Option[Board] = None
   var currentTitle = ""
@@ -33,10 +34,9 @@ object GUI extends JFXApp {
   var cardList = Seq[Card]()
   var cardArcive = Seq[Card]()
 
-  var dragActive = false
-  var isnewboard = false
-  val columntopy = 50
-
+  var dragActive = false                        //checks if we currently are mid drag
+  var isnewboard = false                        //logs if we have a new board of some kind which still hasn't been saved
+  var ispreset1 = false                         //check if we loaded a preset
 
 
 
@@ -150,9 +150,13 @@ object GUI extends JFXApp {
   //board functions
   def createBoard(): Board = {
             val next = new Board()
-            isnewboard = true
             currentBoard = Some(next)
             boardList = boardList :+ next
+            if(ispreset1) {
+                currentBoard.get.title = preset1Title
+                currentBoard.get.columns = preset1columns()
+            }
+            isnewboard = true
             stage = mainBoard()
             next
   }
@@ -244,6 +248,7 @@ object GUI extends JFXApp {
 
       val saveBoard = new Button("Save board") {
           onAction = _ => {
+              if(isnewboard) updateBoardMenu()
               columnList = columnList.filter(_.co != archive.co)          //removing the archive column from the columnlist to avoid dublicates
               if(currentBoard != null ) currentBoard.get.menuBox.updateTitle((" " + currentTitle + " - Last edit: "+ Calendar.getInstance().getTime.toString.dropRight(9) + Calendar.getInstance().getTime.toString.takeRight(4)))
               showMenu()
@@ -252,10 +257,9 @@ object GUI extends JFXApp {
 
       onMouseMoved = (me: MouseEvent) => {          //making the archive hide if not howered and making sure the boardmenu stays up to date
         if(dragActive || !archive.co.hover.value) {
-        archive.hideCards()
-        archive.co.toFront()
+            archive.hideCards()
+            archive.co.toFront()
         }
-        if(isnewboard) updateBoardMenu()
       }
 
       //node positions
@@ -276,13 +280,13 @@ object GUI extends JFXApp {
       children = Seq(archive.co, title, cardTypeLabel, cardTypeSelector, cardColorLabel, cardColorSelector, taggFilterLabel, taggFilter, newColumnButton, removeBox, saveBoard, detectonCircle)
 
       // startup checks based on if the board is new or an edit
-      if(loadColumn.nonEmpty) loadColumn.foreach(c => children.add(c.co))                                                                        //adds all saved columns
-      if(loadCards.nonEmpty) loadCards.foreach(c => c.p.addCustomCard(c))                                                                        //adds all saved cards into the columns
+      if(loadColumn.nonEmpty) loadColumn.foreach(c => if(!children.contains(c.co))children.add(c.co))                                                                        //adds all saved columns
+      if(loadCards.nonEmpty) loadCards.foreach(c => if(!children.contains(c.p)) c.p.addCustomCard(c) )                                                                   //adds all saved cards into the columns
       if(currentBoard.get.archivedCards.nonEmpty) currentBoard.get.archivedCards.foreach(c => cardArcive = cardArcive :+ c)                      //updating archive
       if(loadTitle != "") title.label.text = loadTitle                                                                                           //adds the title if such was saved
-      if(isnewboard) children.add(column0.co)                                                                                                    //checking if we have a new board so we know if we should add the stock column
+      if(isnewboard && !ispreset1) children.add(column0.co)                                                                                                    //checking if we have a new board so we know if we should add the stock column
       else {
-          columnList = columnList.filter(_ != column0)                                                                                           // if not remove it from the column list to avoid it being double saved
+          columnList = columnList.filter(_ != column0).filter(_ != archive)                                                                       // if not remove it from the column list to avoid it being double saved
           newColumnButton.relocate(newColumnButton.layoutX.value + (columnList.length - 1) * (columnWidth + 20), newColumnButton.layoutY.value)  //moving along the column button to match the column amount
       }
 
@@ -303,11 +307,11 @@ object GUI extends JFXApp {
 
                 root = new BorderPane() {
                     top = {
-                        if(isnewboard) {                                                                              //if its a new board => load a blank board
+                        if(isnewboard && !ispreset1) {                                                                //if its a completely new board => load a blank board
                           panelsPane()
                         }
                         else {                                                                                        //else load it with data
-                          panelsPane(columnList, cardList, currentTitle)
+                          panelsPane(columnList.filter(_.co != archive.co) , cardList, currentTitle)
                         }
                     }
                 }
@@ -323,13 +327,24 @@ object GUI extends JFXApp {
 
       val title = new Label("Boards")
 
-      val createBoardButton = new Button("create board"){
-          onAction = _ => {
-              createBoard()                                                    //creates and shows a new board
+      val create = new HBox {
+
+          val loadNew = new Button("create board"){
+              onAction = _ => {
+                  createBoard()                                                    //creates and shows a new board
+              }
           }
+          val loadPreset = new Button("load preset1"){
+              onAction = _ => {
+                 loadpreset1()
+              }
+          }
+
+          children = Seq(loadNew, loadPreset)
+
       }
       style = GUI.border
-      children = Seq(title, createBoardButton)
+      children = Seq(title, create)
   }
 
   def boardSelection() = new JFXApp.PrimaryStage {
@@ -356,30 +371,37 @@ object GUI extends JFXApp {
   def showBoard() = stage = mainBoard()
   def showMenu() = stage = boardSelection()
 
+  val preset1Title = "preset1"
+  def preset1columns() = Seq(new Column("To do"){
+        relocate(0, columntopy)
+      }, new Column("Doing"){
+        relocate((columnWidth+20), columntopy)
+      }, new Column("Done"){
+        relocate(2 * (columnWidth+20), columntopy)
+      })
 
+  def loadpreset1(): Unit = {
+      ispreset1 = true
+      createBoard()
+      ispreset1 = false
+  }
 
 
   //drag and drop helpers
   private var nodeX:  Double = 0d
   private var nodeY:  Double = 0d
 
-    //card options
-  def cardType(): Node = cardTypeSelector.value.value match {
-     case "Field"    => newTextField("Card text")
-     case "Area"     => newTextarea()
-     case "Checkbox" => newCheckBox()
-     case "Slider"   => newSlider()
-  }
-
-  def  cardColor() = cardColorSelector.value.value
 
 
 
     //card types
-  def newTextField(s: String): Node = new TextField() {
+  def newTextField(s: String = ""): TextField = {
+    val f = new TextField() {
           prefWidth = columnWidth - 10
           prefHeight = 10
-          promptText = s
+          text = s
+    }
+    f
   }
 
   def newTextarea(): Node = new TextArea() {
@@ -389,7 +411,8 @@ object GUI extends JFXApp {
   }
 
   def newSlider(): Node = new VBox {
-          val text = newTextField("Slider text")
+          val text = newTextField()
+          text.promptText = "Slidertext"
           val slider = new Slider() {
           prefHeight = 20
           }
@@ -442,9 +465,20 @@ object GUI extends JFXApp {
   }
 
 
+    //card options
+  def cardType(): Node = cardTypeSelector.value.value match {
+     case "Field"    => val c = newTextField(); c.promptText = "cardtext"; c
+     case "Area"     => newTextarea()
+     case "Checkbox" => newCheckBox()
+     case "Slider"   => newSlider()
+  }
+
+  def  cardColor() = cardColorSelector.value.value
+
+
 
   //cards and column classes
-  class Column(title: String = "Title", cards: Seq[Card] = Seq()) {
+  class Column(title: String = "", cards: Seq[Card] = Seq()) {
 
       if(columnList == null) columnList = Seq()
       columnList = columnList :+ this
@@ -453,6 +487,7 @@ object GUI extends JFXApp {
           prefWidth = columnWidth
           prefHeight = 50
           val header = newTextField(title)
+          header.promptText = "title"
           val addCardButton = new Button("Add card") {
               onAction = _ => {
                   addCard()
@@ -487,7 +522,7 @@ object GUI extends JFXApp {
   }
 
 
-  class Card(parent: Column, data: Node = newTextField("cardtext")) {
+  class Card(parent: Column, data: Node = newTextField()) {
 
       var p: Column = parent
       var cardTagg = ""
