@@ -18,13 +18,14 @@ import java.util.Calendar
 object GUI extends JFXApp {
 
   //Editgables
-
-  val windowWidth =  1200  //800
+  val windowWidth =  1000  //800
   val windowHeigth = 800  //600
+
   val columnWidth = 150   //150
   val columnBackgroundColor = "white"
+  //examplecolors: "White", "Black", "LightGray", "LightBlue", "LightGreen", "LightYellow", "Red", "Cyan", "Pink", "Purple", "Brown", "Violet"
 
-  // var backgroundColor = "white"
+
 
 
   //Stock
@@ -40,7 +41,7 @@ object GUI extends JFXApp {
 
   var dragActive = false                        //checks if we currently are mid drag
   var isnewboard = false                        //logs if we have a new board of some kind which still hasn't been saved
-  var ispreset1 = false                         //check if we loaded a preset
+  var ispreset1  = false                         //check if we loaded a preset
 
 
 
@@ -192,7 +193,6 @@ object GUI extends JFXApp {
     isnewboard = false
   }
 
-
    def resetBoard(): Unit = {
       var edited = currentBoard.get
       edited.title = currentTitle
@@ -278,8 +278,8 @@ object GUI extends JFXApp {
           onAction = _ => {
               if(!columnList.forall(c => c == archive)) {
                   def removed() = columnList.filterNot(c => c == archive ).maxBy(_.co.layoutX.value)
-                  removed().deleteCards()
-                  removed().eraseColumn()
+                  removed().deleteCards()                                //removing all cards from the column
+                  removed().eraseColumn()                                //demoving the actual column
                   newColumnButton.relocate(newColumnButton.layoutX.value - (columnWidth + 20), newColumnButton.layoutY.value)
                   this.relocate(this.layoutX.value - (columnWidth + 20), this.layoutY.value)
               }
@@ -296,7 +296,7 @@ object GUI extends JFXApp {
           }
       }
 
-      onMouseMoved = (me: MouseEvent) => {          //making the archive hide if not howered and making sure the boardmenu stays up to date
+      onMouseMoved = (me: MouseEvent) => {                                  //making the archive hide if not howered and making sure the boardmenu stays up to date
         if(dragActive || !archive.co.hover.value) {
             archive.hideCards()
             archive.co.toFront()
@@ -311,7 +311,7 @@ object GUI extends JFXApp {
       cardColorSelector.relocate(350,20)
       tagFilterLabel.relocate(480,0)
       tagFilter.relocate(480,20)
-      removeBox.relocate(140, 0) //480
+      removeBox.relocate(140, 0)
       deleteBox.relocate(700, 0)
       archive.relocate(600, 15)
       saveBoard.relocate(700, 20)
@@ -327,9 +327,9 @@ object GUI extends JFXApp {
       if(loadCards.nonEmpty) loadCards.foreach(c => if(!children.contains(c.p)) c.p.addCustomCard(c) )                                                                   //adds all saved cards into the columns
       if(currentBoard.get.archivedCards.nonEmpty) currentBoard.get.archivedCards.foreach(c => cardArcive = cardArcive :+ c)                      //updating archive
       if(loadTitle != "") title.label.text = loadTitle                                                                                           //adds the title if such was saved
-      if(isnewboard && !ispreset1) children.add(column0.co)                                                                                                    //checking if we have a new board so we know if we should add the stock column
+      if(isnewboard && !ispreset1) children.add(column0.co)                                                                                      //checking if we have a new board so we know if we should add the stock column
       else {
-          columnList = columnList.filter(_ != column0).filter(_ != archive)                                                                       // if not remove it from the column list to avoid it being double saved
+          columnList = columnList.filter(_ != column0).filter(_ != archive)                                                                      // if not remove it from the column list to avoid it being double saved
           newColumnButton.relocate(newColumnButton.layoutX.value + (columnList.length - 1) * (columnWidth + 20), newColumnButton.layoutY.value)  //moving along the column button to match the column amount
           removeColumnButton.relocate(removeColumnButton.layoutX.value + (columnList.length - 1) * (columnWidth + 20), removeColumnButton.layoutY.value)
       }
